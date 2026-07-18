@@ -1,0 +1,13 @@
+import api from "@/utils/api";
+
+export const requestDeleteAccountOTP = async () => {
+  const { data } = await api.post("/user/profile/delete-request");
+  return data;
+};
+
+export const deleteAccount = async (otp) => {
+  const { data } = await api.delete("/user/profile", {
+    data: { otp },
+  });
+  return data;
+};

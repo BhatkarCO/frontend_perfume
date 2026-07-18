@@ -1,0 +1,273 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold-light: #F3E5AB;
+  --color-gold: #B89765;
+  --color-gold-dark: #967849;
+  --color-gold-muted: #C5A880;
+
+  --color-luxury-deep: var(--luxury-deep, #FAF9F6);
+  --color-luxury-charcoal: var(--luxury-charcoal, #FFFFFF);
+  --color-luxury-black: #1F1F1F;
+  --color-luxury-darkgrey: var(--luxury-darkgrey, #F4F4F2);
+  --color-luxury-lightgrey: var(--luxury-lightgrey, #E4E4E0);
+  --color-luxury-cream: var(--luxury-cream, #FAF9F6);
+
+  --font-playfair: var(--font-cormorant), var(--font-playfair), serif;
+  --font-sans: var(--font-inter), sans-serif;
+}
+
+:root {
+  --luxury-deep: #FAF9F6;
+  --luxury-charcoal: #FFFFFF;
+  --luxury-darkgrey: #F4F4F2;
+  --luxury-lightgrey: #E4E4E0;
+  --luxury-cream: #FAF9F6;
+  --luxury-black: #1F1F1F;
+}
+
+.dark {
+  --luxury-deep: #121212;
+  --luxury-charcoal: #1E1E1E;
+  --luxury-darkgrey: #1A1A1A;
+  --luxury-lightgrey: #2D2D2D;
+  --luxury-cream: #121212;
+  --luxury-black: #FAF9F6;
+}
+
+@layer base {
+  body {
+    background-color: var(--luxury-deep);
+    color: var(--luxury-black);
+    font-family: var(--font-inter), sans-serif;
+    overflow-x: hidden;
+    transition: color 0.3s, background-color 0.3s;
+  }
+
+  ::selection {
+    background-color: #B89765;
+    color: #FAF9F6;
+  }
+  ::-moz-selection {
+    background-color: #B89765;
+    color: #FAF9F6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-cormorant), var(--font-playfair), serif;
+    letter-spacing: 0.05em;
+    color: var(--luxury-black);
+    transition: color 0.3s;
+  }
+}
+
+/* Custom Scrollbar for Luxury Aesthetics */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF9F6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C5A880;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B89765;
+}
+
+/* Light Glassmorphism / Clean container Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(228, 228, 224, 0.6);
+  box-shadow: 0 8px 32px 0 rgba(31, 31, 31, 0.04);
+}
+
+.glass-dark {
+  background: rgba(250, 249, 246, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(228, 228, 224, 0.8);
+  box-shadow: 0 12px 40px 0 rgba(31, 31, 31, 0.06);
+}
+
+/* Classical Text Styling */
+.text-gold-gradient {
+  color: #1F1F1F;
+}
+
+/* Classical Luxury Buttons (Solid dark / Gold-foil accents) */
+.btn-gold {
+  background: #1F1F1F;
+  color: white;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-gold:hover {
+  background: #B89765;
+  color: #FAF9F6;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Luxury Border Animation */
+.luxury-card {
+  position: relative;
+  overflow: hidden;
+  background-color: white;
+  border: 1px solid var(--luxury-lightgrey);
+  border-radius: 0.125rem;
+  transition: all 0.5s;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.luxury-card:hover {
+  border-color: rgba(184, 151, 101, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom Hide Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Magnifying glass container styling */
+.img-zoom-container {
+  position: relative;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.img-zoom-lens {
+  position: absolute;
+  border: 1px solid #B89765;
+  width: 100px;
+  height: 100px;
+  background-color: rgba(184, 151, 101, 0.1);
+  pointer-events: none;
+}
+
+/* Classical visual pyramid line dividers */
+.pyramid-line {
+  border-bottom: 1.5px solid #E4E4E0;
+}
+
+/* Global high-specificity dark mode overrides */
+.dark body {
+  background-color: var(--luxury-deep) !important;
+  color: var(--luxury-black) !important;
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: var(--luxury-black) !important;
+}
+
+.dark .text-luxury-black {
+  color: var(--luxury-black) !important;
+}
+
+.dark .text-gold-gradient {
+  color: var(--luxury-black) !important;
+}
+
+/* Override standard bg-white to dark card background in dark mode */
+.dark .bg-white {
+  background-color: var(--luxury-charcoal) !important;
+}
+
+/* Ensure background colors of inputs, textareas and selects are dark in dark mode */
+.dark input, 
+.dark textarea, 
+.dark select {
+  background-color: var(--luxury-deep) !important;
+  color: var(--luxury-black) !important;
+  border-color: var(--luxury-lightgrey) !important;
+}
+
+/* Ensure standard text colors adjust */
+.dark .text-gray-900 { color: #F3F4F6 !important; }
+.dark .text-gray-800 { color: #E5E7EB !important; }
+.dark .text-gray-700 { color: #E5E7EB !important; }
+.dark .text-gray-600 { color: #D1D5DB !important; }
+.dark .text-gray-500 { color: #9CA3AF !important; }
+.dark .text-gray-400 { color: #9CA3AF !important; }
+
+/* Ensure borders adjust */
+.dark .border-gray-200, 
+.dark .border-gray-100 {
+  border-color: var(--luxury-lightgrey) !important;
+}
+
+.dark .border-luxury-lightgrey {
+  border-color: var(--luxury-lightgrey) !important;
+}
+
+.dark .pyramid-line {
+  border-bottom-color: var(--luxury-lightgrey) !important;
+}
+
+/* Dropdowns & hovers */
+.dark .bg-gray-50 {
+  background-color: #252525 !important;
+}
+.dark .hover\:bg-gray-50:hover {
+  background-color: #252525 !important;
+}
+
+/* Collections / Dropdown hover styling */
+.dark .dropdown-menu {
+  background-color: var(--luxury-charcoal) !important;
+  border-color: var(--luxury-lightgrey) !important;
+}
+
+/* Dark scrollbar track */
+.dark ::-webkit-scrollbar-track {
+  background: var(--luxury-deep);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #B89765;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #C5A880;
+}
+
+/* Glassmorphism Dark mode styling */
+.dark .glass {
+  background: rgba(30, 30, 30, 0.85) !important;
+  border: 1px solid rgba(45, 45, 45, 0.6) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .glass-dark {
+  background: rgba(18, 18, 18, 0.95) !important;
+  border: 1px solid rgba(45, 45, 45, 0.8) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Overrides for semi-transparent white backgrounds in dark mode */
+.dark .bg-white\/25 {
+  background-color: rgba(18, 18, 18, 0.35) !important;
+}
+.dark .bg-white\/50 {
+  background-color: rgba(18, 18, 18, 0.65) !important;
+}
+.dark .bg-white\/70 {
+  background-color: rgba(18, 18, 18, 0.75) !important;
+}
+.dark .bg-white\/80 {
+  background-color: rgba(30, 30, 30, 0.85) !important;
+}
