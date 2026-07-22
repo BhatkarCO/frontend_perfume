@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 
@@ -16,6 +16,7 @@ function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const redirectPath = searchParams.get("redirect") || "/dashboard";
 
@@ -77,14 +78,28 @@ function LoginContent() {
 
           <div className="flex flex-col gap-1 relative">
             <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black placeholder-gray-400 text-xs pl-11 pr-4 py-3.5 rounded-sm focus:outline-none focus:border-gold"
+              className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black placeholder-gray-400 text-xs pl-11 pr-11 py-3.5 rounded-sm focus:outline-none focus:border-gold"
             />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
           </div>
 
           <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
@@ -122,7 +137,6 @@ function LoginContent() {
             Create Account
           </Link>
         </p>
-
       </div>
     </div>
   );
@@ -130,7 +144,13 @@ function LoginContent() {
 
 export default function Login() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center py-32 text-gold text-xs uppercase tracking-widest font-semibold bg-luxury-deep">Loading Sign In...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center py-32 text-gold text-xs uppercase tracking-widest font-semibold bg-luxury-deep">
+          Loading Sign In...
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   );
