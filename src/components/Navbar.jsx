@@ -1,20 +1,38 @@
 "use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { ShoppingBag, User, Heart, Search, Menu, X, LogOut, ChevronDown, Sun, Moon } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useCart } from '@/context/CartContext';
-import { useTheme } from '@/context/ThemeContext';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import {
+  ShoppingBag,
+  User,
+  Heart,
+  Search,
+  Menu,
+  X,
+  LogOut,
+  ChevronDown,
+  Sun,
+  Moon,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
+import { useTheme } from "@/context/ThemeContext";
 
 export const Navbar = () => {
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const { cartItems, setCartOpen } = useCart();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+
+  const [showAnnouncement, setShowAnnouncement] = useState(() => {
+    if (typeof window === "undefined") return true;
+
+    return sessionStorage.getItem("announcementClosed") !== "true";
+  });
+
   const router = useRouter();
   const pathname = usePathname();
 
@@ -25,27 +43,40 @@ export const Navbar = () => {
     if (searchQuery.trim()) {
       router.push(`/catalog?search=${encodeURIComponent(searchQuery)}`);
       setSearchOpen(false);
-      setSearchQuery('');
+      setSearchQuery("");
     }
   };
 
   const handleLogoClick = (e) => {
-    if (pathname === '/') {
+    if (pathname === "/") {
       e.preventDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-luxury-lightgrey shadow-sm">
-      
       {/* Top Announcement Bar - D2C Branding */}
-      <div className="bg-luxury-black text-white text-[9px] sm:text-[10px] py-2 uppercase font-semibold text-center tracking-[0.25em]">
-        Free shipping on orders above ₹1500 • Handcrafted in India
-      </div>
+      {showAnnouncement && (
+        <div className="relative bg-luxury-black text-white text-[9px] sm:text-[10px] py-2 uppercase font-semibold tracking-[0.25em]">
+          <p className="text-center">
+            Free shipping on orders above ₹1500 • Handcrafted in India
+          </p>
+
+          <button
+            onClick={() => {
+              sessionStorage.setItem("announcementClosed", "true");
+              setShowAnnouncement(false);
+            }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 hover:text-gray-300 transition"
+            aria-label="Close announcement"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex md:grid md:grid-cols-3 items-center justify-between">
-        
         {/* Left Column */}
         <div className="flex-1 md:flex-none flex items-center justify-start">
           {/* Mobile Menu Toggle (only visible on mobile) */}
@@ -55,49 +86,74 @@ export const Navbar = () => {
           >
             <Menu className="w-6 h-6" />
           </button>
- 
+
           {/* Desktop Left Nav Pills (only visible on desktop) */}
           <div className="hidden md:flex items-center space-x-3">
             {/* COLLECTIONS Dropdown */}
             {!isAdmin && (
               <div className="relative group">
                 <button className="bg-white border border-gray-200 text-luxury-black text-[10px] tracking-widest font-semibold uppercase px-4 py-2.5 rounded-md flex items-center gap-1.5 hover:bg-gray-50 hover:border-gray-300 transition-colors focus:outline-none">
-                  Collections <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:rotate-180 transition-transform duration-200" />
+                  Collections{" "}
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:rotate-180 transition-transform duration-200" />
                 </button>
                 {/* Dropdown Menu Wrapper (Bridges the hover gap using padding-top) */}
                 <div className="absolute left-0 top-full pt-1.5 w-52 hidden group-hover:block z-50">
                   {/* Actual Dropdown Card */}
                   <div className="dropdown-menu bg-white border border-gray-200 rounded-md shadow-xl py-2">
-                    <Link href="/catalog" className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors">
+                    <Link
+                      href="/catalog"
+                      className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors"
+                    >
                       All Perfumes
                     </Link>
-                    <Link href="/catalog?category=signature-collection" className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors">
+                    <Link
+                      href="/catalog?category=signature-collection"
+                      className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors"
+                    >
                       Signature Collection
                     </Link>
-                    <Link href="/catalog?category=fresh-collection" className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors">
+                    <Link
+                      href="/catalog?category=fresh-collection"
+                      className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors"
+                    >
                       Fresh Collection
                     </Link>
-                    <Link href="/catalog?category=floral-collection" className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors">
+                    <Link
+                      href="/catalog?category=floral-collection"
+                      className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors"
+                    >
                       Floral Collection
                     </Link>
-                    <Link href="/catalog?category=woody-collection" className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors">
+                    <Link
+                      href="/catalog?category=woody-collection"
+                      className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors"
+                    >
                       Woody Collection
                     </Link>
-                    <Link href="/catalog?category=luxury-collection" className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors">
+                    <Link
+                      href="/catalog?category=luxury-collection"
+                      className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors"
+                    >
                       Luxury Collection
                     </Link>
-                    <Link href="/catalog?category=gift-sets" className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors">
+                    <Link
+                      href="/catalog?category=gift-sets"
+                      className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors"
+                    >
                       Gift Sets
                     </Link>
                     <hr className="border-gray-100 my-1.5" />
-                    <Link href="/contact" className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors">
+                    <Link
+                      href="/contact"
+                      className="block px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors"
+                    >
                       Contact Us
                     </Link>
                   </div>
                 </div>
               </div>
             )}
- 
+
             {/* PRIVATE BLENDS Button */}
             {!isAdmin && (
               <Link
@@ -127,10 +183,14 @@ export const Navbar = () => {
             )}
           </div>
         </div>
- 
+
         {/* Center Column: Logo */}
         <div className="flex-shrink-0 flex justify-center">
-          <Link href="/" onClick={handleLogoClick} className="flex flex-col items-center">
+          <Link
+            href="/"
+            onClick={handleLogoClick}
+            className="flex flex-col items-center"
+          >
             <span className="font-playfair text-lg sm:text-2xl font-bold tracking-[0.15em] sm:tracking-[0.18em] text-luxury-black whitespace-nowrap">
               BHATKAR & CO.
             </span>
@@ -175,7 +235,7 @@ export const Navbar = () => {
               title="My Account"
             >
               <div className="w-7 h-7 rounded-full bg-luxury-black dark:bg-gold text-white dark:text-black text-xs font-bold flex items-center justify-center">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
               </div>
             </Link>
           ) : (
@@ -195,7 +255,7 @@ export const Navbar = () => {
             aria-label="Toggle Dark Mode"
             type="button"
           >
-            {theme === 'dark' ? (
+            {theme === "dark" ? (
               <Sun className="w-4 h-4 text-luxury-black transition-transform duration-300 rotate-0 hover:rotate-12" />
             ) : (
               <Moon className="w-4 h-4 text-luxury-black transition-transform duration-300 rotate-0 hover:-rotate-12" />
@@ -210,7 +270,13 @@ export const Navbar = () => {
               aria-label="Shopping Cart"
               type="button"
             >
-              <svg className="w-4 h-4 text-luxury-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg
+                className="w-4 h-4 text-luxury-black"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
                 <path d="M6 22H18C19.1 22 20 21.1 20 20V8H4V20C4 21.1 4.9 22 6 22Z" />
                 <path d="M16 8V6C16 3.8 14.2 2 12 2C9.8 2 8 3.8 8 6V8" />
               </svg>
@@ -220,7 +286,6 @@ export const Navbar = () => {
             </button>
           )}
         </div>
-
       </div>
 
       {/* Mobile Sidebar Navigation Menu */}
@@ -231,11 +296,13 @@ export const Navbar = () => {
             className="fixed inset-0 bg-black/50"
             onClick={() => setMobileMenuOpen(false)}
           />
-          
+
           {/* Menu Panel */}
           <div className="relative flex flex-col w-full max-w-xs h-full bg-white border-r border-luxury-lightgrey p-6 shadow-xl z-50">
             <div className="flex items-center justify-between pb-6 border-b border-luxury-lightgrey">
-              <span className="font-playfair text-lg font-bold tracking-widest text-luxury-black">BHATKAR & CO.</span>
+              <span className="font-playfair text-lg font-bold tracking-widest text-luxury-black">
+                BHATKAR & CO.
+              </span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-gray-400 hover:text-gold focus:outline-none"
@@ -254,7 +321,10 @@ export const Navbar = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 border border-gray-200 bg-white text-luxury-black placeholder-gray-400 text-xs px-3 py-2 rounded focus:outline-none"
                 />
-                <button type="submit" className="bg-luxury-black text-white px-3 py-2 rounded flex items-center justify-center">
+                <button
+                  type="submit"
+                  className="bg-luxury-black text-white px-3 py-2 rounded flex items-center justify-center"
+                >
                   <Search className="w-3.5 h-3.5" />
                 </button>
               </form>
@@ -263,22 +333,82 @@ export const Navbar = () => {
             <nav className="flex-1 flex flex-col gap-6 text-xs uppercase tracking-widest font-bold py-6 overflow-y-auto">
               {!isAdmin && (
                 <>
-                  <Link href="/catalog" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-gold">All Perfumes</Link>
-                  <Link href="/catalog?category=signature-collection" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-gold">Signature Collection</Link>
-                  <Link href="/catalog?category=fresh-collection" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-gold">Fresh Collection</Link>
-                  <Link href="/catalog?category=floral-collection" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-gold">Floral Collection</Link>
-                  <Link href="/catalog?category=woody-collection" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-gold">Woody Collection</Link>
-                  <Link href="/catalog?category=luxury-collection" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-gold">Luxury Collection</Link>
-                  <Link href="/catalog?category=gift-sets" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-gold">Gift Sets</Link>
+                  <Link
+                    href="/catalog"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-gold"
+                  >
+                    All Perfumes
+                  </Link>
+                  <Link
+                    href="/catalog?category=signature-collection"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-gold"
+                  >
+                    Signature Collection
+                  </Link>
+                  <Link
+                    href="/catalog?category=fresh-collection"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-gold"
+                  >
+                    Fresh Collection
+                  </Link>
+                  <Link
+                    href="/catalog?category=floral-collection"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-gold"
+                  >
+                    Floral Collection
+                  </Link>
+                  <Link
+                    href="/catalog?category=woody-collection"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-gold"
+                  >
+                    Woody Collection
+                  </Link>
+                  <Link
+                    href="/catalog?category=luxury-collection"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-gold"
+                  >
+                    Luxury Collection
+                  </Link>
+                  <Link
+                    href="/catalog?category=gift-sets"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gray-700 hover:text-gold"
+                  >
+                    Gift Sets
+                  </Link>
                 </>
               )}
-              <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-gold">Contact Us</Link>
+              <Link
+                href="/contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-gray-700 hover:text-gold"
+              >
+                Contact Us
+              </Link>
               <hr className="border-luxury-lightgrey my-2" />
               {isAuthenticated ? (
                 <>
-                  <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="text-gold">My Dashboard</Link>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gold"
+                  >
+                    My Dashboard
+                  </Link>
                   {isAdmin && (
-                    <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="text-gold">Inventory</Link>
+                    <Link
+                      href="/admin"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-gold"
+                    >
+                      Inventory
+                    </Link>
                   )}
                   <button
                     onClick={() => {
@@ -291,7 +421,13 @@ export const Navbar = () => {
                   </button>
                 </>
               ) : (
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="text-gold">Sign In / Register</Link>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-gold"
+                >
+                  Sign In / Register
+                </Link>
               )}
             </nav>
           </div>
