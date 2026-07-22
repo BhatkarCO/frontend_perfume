@@ -46,7 +46,6 @@ export default function LayoutWrapper({ children }) {
   return (
     <div className="flex flex-col min-h-screen bg-luxury-deep text-luxury-black">
       {/* Top Navbar */}
-      <AnnouncementBar />
       <Navbar />
 
       {/* Shopping Bag Drawer */}
