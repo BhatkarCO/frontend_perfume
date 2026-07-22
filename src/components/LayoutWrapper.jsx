@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
-import { AnnouncementBar } from "@/components/AnnouncementBar";
+import AnnouncementBar from "@/components/AnnouncementBar";
 import { Navbar } from "@/components/Navbar";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
