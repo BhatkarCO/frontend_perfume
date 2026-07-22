@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { Navbar } from "@/components/Navbar";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
@@ -46,6 +47,7 @@ export default function LayoutWrapper({ children }) {
   return (
     <div className="flex flex-col min-h-screen bg-luxury-deep text-luxury-black">
       {/* Top Navbar */}
+      <AnnouncementBar />
       <Navbar />
 
       {/* Shopping Bag Drawer */}

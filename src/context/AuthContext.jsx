@@ -62,10 +62,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post("/auth/login", {
-        //changed
         email,
         password,
       });
+
+      // Reset announcement bar on successful login
+      sessionStorage.removeItem("announcementClosed");
 
       const { user: loggedUser } = response.data;
 
@@ -75,14 +77,12 @@ export const AuthProvider = ({ children }) => {
         success: true,
         user: loggedUser,
       };
-  
     } catch (error) {
       console.error("Login error:", error);
 
       return {
         success: false,
-        message:
-          error.response?.data?.message || "Login failed.",
+        message: error.response?.data?.message || "Login failed.",
         errors: error.response?.data?.errors || [],
       };
     }
@@ -108,6 +108,8 @@ export const AuthProvider = ({ children }) => {
   const verifyEmailOTP = async (email, otp) => {
     try {
       const response = await api.post("/auth/verify-otp", { email, otp });
+      
+      sessionStorage.removeItem("announcementClosed");
       const { user: verifiedUser } = response.data; //changed
 
       setUser(verifiedUser);
@@ -115,14 +117,12 @@ export const AuthProvider = ({ children }) => {
       return {
         success: true,
       };
-
     } catch (error) {
       console.error("OTP verify error:", error);
 
       return {
         success: false,
-        message:
-          error.response?.data?.message || "OTP verification failed.",
+        message: error.response?.data?.message || "OTP verification failed.",
         errors: error.response?.data?.errors || [],
       };
     }
@@ -164,54 +164,53 @@ export const AuthProvider = ({ children }) => {
   /**
    * Verify Forgot Password OTP
    */
- const verifyForgotPasswordOTP = async (email, otp) => {
-  try {
-    const response = await api.post("/auth/verify-forgot-password", {
-      email,
-      otp,
-    });
+  const verifyForgotPasswordOTP = async (email, otp) => {
+    try {
+      const response = await api.post("/auth/verify-forgot-password", {
+        email,
+        otp,
+      });
 
-    return {
-      success: true,
-      message: response.data.message,
-    };
-  } catch (error) {
-    console.error("Verify forgot password OTP error:", error);
+      return {
+        success: true,
+        message: response.data.message,
+      };
+    } catch (error) {
+      console.error("Verify forgot password OTP error:", error);
 
-    return {
-      success: false,
-      message:
-        error.response?.data?.message || "OTP verification failed.",
-      errors: error.response?.data?.errors || [],
-    };
-  }
-};
+      return {
+        success: false,
+        message: error.response?.data?.message || "OTP verification failed.",
+        errors: error.response?.data?.errors || [],
+      };
+    }
+  };
 
   /**
    * Reset Password
    */
   const resetPassword = async (email, newPassword) => {
-  try {
-    const response = await api.post("/auth/reset-password", {
-      email,
-      newPassword,
-    });
+    try {
+      const response = await api.post("/auth/reset-password", {
+        email,
+        newPassword,
+      });
 
-    return {
-      success: true,
-      message: response.data.message,
-    };
-  } catch (error) {
-    console.error("Reset password error:", error);
+      return {
+        success: true,
+        message: response.data.message,
+      };
+    } catch (error) {
+      console.error("Reset password error:", error);
 
-    return {
-      success: false,
-      message:
-        error.response?.data?.message || "Reset password request failed.",
-      errors: error.response?.data?.errors || [],
-    };
-  }
-};
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || "Reset password request failed.",
+        errors: error.response?.data?.errors || [],
+      };
+    }
+  };
 
   /**
    * Update Profile Details Locally
