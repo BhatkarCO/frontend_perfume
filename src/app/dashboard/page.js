@@ -434,29 +434,47 @@ function DashboardContent() {
                   <h3 className="font-playfair text-[10px] uppercase tracking-widest text-luxury-black font-bold">
                     Change Password
                   </h3>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">
-                      Old Password
-                    </label>
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={showOldPassword ? "text" : "password"}
                       value={oldPassword}
                       onChange={(e) => setOldPassword(e.target.value)}
                       required
-                      className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 py-2.5 rounded-sm focus:outline-none"
+                      className="w-full bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 pr-10 py-2.5 rounded-sm focus:outline-none"
                     />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold"
+                    >
+                      {showOldPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">
-                      New Password
-                    </label>
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={showNewPassword ? "text" : "password"}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
-                      className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 py-2.5 rounded-sm focus:outline-none"
+                      className="w-full bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 pr-10 py-2.5 rounded-sm focus:outline-none"
                     />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                   <button
                     type="submit"
