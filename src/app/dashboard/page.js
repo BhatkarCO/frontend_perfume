@@ -13,6 +13,8 @@ import {
   Download,
   CheckCircle,
   Clock,
+  Eye,
+  EyeOff,
   Truck,
   Home as HomeIcon,
 } from "lucide-react";
@@ -37,6 +39,8 @@ function DashboardContent() {
   const [profilePhone, setProfilePhone] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [addresses, setAddresses] = useState([]);
