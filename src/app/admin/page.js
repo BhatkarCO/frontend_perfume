@@ -38,6 +38,9 @@ function AdminContent() {
   const [forgotOTP, setForgotOTP] = useState("");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
   const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
+  const [showForgotConfirmPassword, setShowForgotConfirmPassword] =
+    useState(false);
 
   const [forgotLoading, setForgotLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
@@ -1744,21 +1747,53 @@ function AdminContent() {
               className="w-full border rounded px-4 py-3 mb-3"
             />
 
-            <input
-              type="password"
-              value={forgotNewPassword}
-              onChange={(e) => setForgotNewPassword(e.target.value)}
-              placeholder="New Password"
-              className="w-full border rounded px-4 py-3 mb-3"
-            />
+            {/* New Password */}
+            <div className="relative mb-3">
+              <input
+                type={showForgotNewPassword ? "text" : "password"}
+                value={forgotNewPassword}
+                onChange={(e) => setForgotNewPassword(e.target.value)}
+                placeholder="New Password"
+                className="w-full border rounded px-4 py-3 pr-10"
+              />
 
-            <input
-              type="password"
-              value={forgotConfirmPassword}
-              onChange={(e) => setForgotConfirmPassword(e.target.value)}
-              placeholder="Confirm Password"
-              className="w-full border rounded px-4 py-3 mb-5"
-            />
+              <button
+                type="button"
+                onClick={() => setShowForgotNewPassword(!showForgotNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold"
+              >
+                {showForgotNewPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="relative mb-5">
+              <input
+                type={showForgotConfirmPassword ? "text" : "password"}
+                value={forgotConfirmPassword}
+                onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                placeholder="Confirm Password"
+                className="w-full border rounded px-4 py-3 pr-10"
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowForgotConfirmPassword(!showForgotConfirmPassword)
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold"
+              >
+                {showForgotConfirmPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
 
             <div className="flex justify-end gap-3">
               <button
