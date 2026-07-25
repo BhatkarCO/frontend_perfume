@@ -29,6 +29,7 @@ function AdminContent() {
   const [loading, setLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -574,19 +575,36 @@ function AdminContent() {
               onChange={(e) => setAdminEmail(e.target.value)}
               required
               className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 py-3 rounded-sm focus:outline-none focus:border-gold"
-              placeholder="admin@bhatkar-perfumes.com"
+              placeholder="Email Address"
             />
             <label className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold">
               Password
             </label>
-            <input
-              type="password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              required
-              className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 py-3 rounded-sm focus:outline-none focus:border-gold"
-              placeholder="AdminPass123"
-            />
+            <div className="relative">
+              <input
+                type={showAdminPassword ? "text" : "password"}
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                required
+                placeholder="Password"
+                className="w-full bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 pr-10 py-3 rounded-sm focus:outline-none focus:border-gold"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowAdminPassword(!showAdminPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold transition-colors"
+                aria-label={
+                  showAdminPassword ? "Hide password" : "Show password"
+                }
+              >
+                {showAdminPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
             <button
               type="submit"
               disabled={adminLoading}
