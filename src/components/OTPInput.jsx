@@ -185,12 +185,6 @@ export default function OTPInput({ email, purpose, onVerifySuccess, onBack }) {
             </button>
           )}
         </div>
-
-        {/* Local sandbox log warning */}
-        <div className="text-[10px] bg-luxury-deep border border-luxury-lightgrey p-3 rounded-sm text-gray-500 leading-relaxed font-light w-full">
-          <p className="font-bold uppercase tracking-wider mb-1 text-luxury-black font-playfair">Testing Notice:</p>
-          <p>Since the email service is running locally, standard emails are printed to the **Server Terminal Console** logs. Open your backend console and check the log to copy the 6-digit OTP code.</p>
-        </div>
       </div>
     </div>
   );

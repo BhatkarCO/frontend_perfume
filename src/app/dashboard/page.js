@@ -328,6 +328,11 @@ function DashboardContent() {
     ];
     return steps.indexOf(status);
   };
+  useEffect(() => {
+    if (activeOrder?.items) {
+      console.log(activeOrder.items);
+    }
+  }, [activeOrder]);
 
   return (
     <>
@@ -857,9 +862,9 @@ function DashboardContent() {
                       </h4>
                       <div className="flex flex-col gap-3">
                         {activeOrder.items &&
-                          activeOrder.items.map((item) => (
+                          activeOrder.items.map((item, index) => (
                             <div
-                              key={item.id}
+                              key={`${item.product_id}-${index}`}
                               className="flex gap-4 items-center"
                             >
                               <div className="relative w-10 h-12 shrink-0 bg-luxury-deep border border-luxury-lightgrey rounded overflow-hidden">
