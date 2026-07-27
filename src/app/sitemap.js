@@ -1,5 +1,5 @@
 const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://bhatkar-perfumes.com';
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://bhatkarco.com';
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 

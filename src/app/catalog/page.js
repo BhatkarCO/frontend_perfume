@@ -32,7 +32,7 @@ export const metadata = {
 };
 
 export default function Catalog() {
-  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bhatkar-perfumes.com';
+  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bhatkarco.com';
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",

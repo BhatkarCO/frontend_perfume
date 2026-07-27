@@ -24,7 +24,7 @@ const playfair = Playfair_Display({
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") ||
-  "https://www.bhatkarandco.com";
+  "https://www.bhatkarco.com";
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
