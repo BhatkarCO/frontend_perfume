@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CreditCard, Truck, CheckCircle } from "lucide-react";
 
@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import api from "@/utils/api";
 
-export default function PaymentPage() {
+function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -322,5 +322,18 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center min-h-[70vh]">
+          Loading payment...
+        </div>
+      }
+    >
+      <PaymentContent />
+    </Suspense>
   );
 }
