@@ -28,7 +28,7 @@ function DashboardContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user, logout, updateLocalUserProfile } = useAuth();
+  const { user, loading, logout, updateLocalUserProfile } = useAuth();
   const { addToCart } = useCart();
   const toast = useToast();
 
@@ -70,18 +70,20 @@ function DashboardContent() {
   const [phone, setPhone] = useState("");
 
   useEffect(() => {
-    if (user) {
-      setProfileName(user.name || "");
-      setProfilePhone(user.phone || "");
-    } else {
-      router.push("/login");
+    if (loading) return;
+
+    if (!user) {
+      router.replace("/login");
       return;
     }
+
+    setProfileName(user.name || "");
+    setProfilePhone(user.phone || "");
 
     if (tabParam === "addresses") fetchAddresses();
     if (tabParam === "orders") fetchOrders();
     if (tabParam === "wishlist") fetchWishlist();
-  }, [tabParam, user, router]);
+  }, [loading, user, tabParam, router]);
 
   const handleTabChange = (tabName) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -333,6 +335,12 @@ function DashboardContent() {
       console.log(activeOrder.items);
     }
   }, [activeOrder]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-32">Loading...</div>
+    );
+  }
 
   return (
     <>

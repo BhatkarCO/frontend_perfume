@@ -21,10 +21,13 @@ const playfair = Playfair_Display({
   weight: ["400", "600", "700"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") ||
+  "https://www.bhatkarandco.com";
+
 export const metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-  ),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Bhatkar & Co. Perfumes | House of Luxury Fragrances",
     template: "%s | Bhatkar & Co. Perfumes",
@@ -82,13 +85,14 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-full flex flex-col">
         <Providers>
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
+          <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>
 
         {/* Razorpay Web Checkout SDK */}
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

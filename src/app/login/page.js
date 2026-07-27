@@ -38,7 +38,7 @@ function LoginContent() {
       if (!result.user.is_verified) {
         toast.info("Please verify your email to complete registration.");
         router.push("/verify-email");
-      } else {
+      } else { typeof window === "undefined"
         router.push(redirectPath);
       }
     } else {

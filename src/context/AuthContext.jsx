@@ -18,7 +18,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    //changed
     const fetchCurrentUser = async () => {
       try {
         const response = await api.get("/auth/me");
@@ -108,7 +107,7 @@ export const AuthProvider = ({ children }) => {
   const verifyEmailOTP = async (email, otp) => {
     try {
       const response = await api.post("/auth/verify-otp", { email, otp });
-      
+
       sessionStorage.removeItem("announcementClosed");
       const { user: verifiedUser } = response.data; //changed
 
