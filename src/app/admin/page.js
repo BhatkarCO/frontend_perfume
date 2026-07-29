@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import api from "@/utils/api";
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import {
   LogOut,
   Plus,
@@ -92,6 +93,12 @@ function AdminContent() {
   const [editProdNotes, setEditProdNotes] = useState("");
 
   const [editProdFiles, setEditProdFiles] = useState([]);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedProductReviews, setSelectedProductReviews] = useState([]);
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
+  const [deleteReviewLoading, setDeleteReviewLoading] = useState(false);
 
   const [existingImages, setExistingImages] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
@@ -421,6 +428,44 @@ function AdminContent() {
       toast.error(err.response?.data?.message || "Failed to update product.");
     } finally {
       setEditLoading(false);
+    }
+  };
+
+  const handleOpenReviews = async (productId) => {
+    try {
+      setReviewsLoading(true);
+
+      const res = await api.get(`/admin/products/${productId}/reviews`);
+
+      setSelectedProductReviews(res.data);
+      setSelectedProductId(productId);
+      setReviewModalOpen(true);
+    } catch (err) {
+      toast.error("Failed to load reviews.");
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleDeleteReview = (reviewId) => {
+    setReviewToDelete(reviewId);
+  };
+
+  const confirmDeleteReview = async () => {
+    try {
+      setDeleteReviewLoading(true);
+
+      await api.delete(`/admin/reviews/${reviewToDelete}`);
+
+      setReviewToDelete(null); 
+
+      await handleOpenReviews(selectedProductId);
+
+      toast.success("Review deleted.");
+    } catch (err) {
+      toast.error("Failed to delete review.");
+    } finally {
+      setDeleteReviewLoading(false);
     }
   };
 
@@ -951,6 +996,14 @@ function AdminContent() {
                             <p className="text-sm font-bold text-gold">
                               ₹{parseFloat(prod.price || 0).toFixed(0)}
                             </p>
+                            <button
+                              onClick={() => handleOpenReviews(prod.id)}
+                              className="text-blue-500 hover:text-blue-700 p-1.5 rounded hover:bg-blue-50 transition-colors"
+                              title="View Reviews"
+                              type="button"
+                            >
+                              Reviews
+                            </button>
                             <button
                               onClick={() => handleOpenEditModal(prod)}
                               className="text-gray-400 hover:text-gold p-1.5 rounded hover:bg-gold/10 transition-colors focus:outline-none"
@@ -1751,6 +1804,67 @@ function AdminContent() {
           </div>
         </div>
       )}
+      {reviewModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">Product Reviews</h2>
+
+              <button
+                onClick={() => setReviewModalOpen(false)}
+                className="text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {selectedProductReviews.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="text-5xl mb-4">⭐</div>
+
+                <h3 className="text-lg font-semibold text-gray-800">
+                  No Reviews Yet
+                </h3>
+
+                <p className="mt-2 text-sm text-gray-500">
+                  This product doesn't have any customer reviews.
+                </p>
+              </div>
+            ) : (
+              selectedProductReviews.map((review) => (
+                <div key={review._id} className="border rounded p-4 mb-4">
+                  <p>
+                    <strong>{review.user_name}</strong>
+                  </p>
+
+                  <p>⭐ {review.rating}/5</p>
+
+                  <p className="mt-2">{review.comment}</p>
+
+                  <button
+                    onClick={() => handleDeleteReview(review._id)}
+                    className="mt-3 bg-red-600 text-white px-3 py-1 rounded"
+                  >
+                    Delete Review
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      <DeleteConfirmationModal
+        isOpen={!!reviewToDelete}
+        title="Delete Review"
+        message="Are you sure you want to permanently delete this review?"
+        confirmText="Delete Review"
+        cancelText="Cancel"
+        loading={deleteReviewLoading}
+        onConfirm={confirmDeleteReview}
+        onCancel={() => setReviewToDelete(null)}
+      />
+
       {showForgotModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
