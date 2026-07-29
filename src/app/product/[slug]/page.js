@@ -66,7 +66,7 @@ export default async function ProductPage({ params }) {
   const { slug } = await params;
   const product = await getProduct(slug);
 
-  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bhatkar-perfumes.com';
+  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bhatkarco.com';
 
   const productJsonLd = product
     ? {

@@ -90,8 +90,11 @@ function AdminContent() {
   const [editProdBestSelling, setEditProdBestSelling] = useState(false);
   const [editProdNewArrival, setEditProdNewArrival] = useState(false);
   const [editProdNotes, setEditProdNotes] = useState("");
+
   const [editProdFiles, setEditProdFiles] = useState([]);
 
+  const [existingImages, setExistingImages] = useState([]);
+  const [deletedImages, setDeletedImages] = useState([]);
   // Change Password Form State
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -306,6 +309,7 @@ function AdminContent() {
   };
 
   const handleOpenEditModal = (prod) => {
+    console.log("Product data:", prod);
     setEditProdId(prod.id);
     setEditProdName(prod.name || "");
     setEditProdShortDesc(prod.short_description || "");
@@ -326,7 +330,17 @@ function AdminContent() {
         : prod.fragrance_notes || "",
     );
     setEditProdFiles([]);
+    setExistingImages(prod.images || []);
+    setDeletedImages([]);
     setIsEditModalOpen(true);
+  };
+
+  const removeExistingImage = (img) => {
+    setExistingImages((prev) =>
+      prev.filter((i) => i.image_url !== img.image_url),
+    );
+
+    setDeletedImages((prev) => [...prev, img.image_url]);
   };
 
   const handleEditProductSubmit = async (e) => {
@@ -351,6 +365,10 @@ function AdminContent() {
       formData.append("is_featured", editProdFeatured);
       formData.append("is_best_selling", editProdBestSelling);
       formData.append("is_new_arrival", editProdNewArrival);
+
+      if (deletedImages.length > 0) {
+        formData.append("deletedImages", JSON.stringify(deletedImages));
+      }
 
       if (editProdNotes) {
         const notesArray = editProdNotes
@@ -1585,6 +1603,37 @@ function AdminContent() {
                   placeholder="Top, Heart, Base notes"
                 />
               </div>
+
+              {existingImages.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-[9px] uppercase tracking-widest text-gray-500 font-semibold">
+                    Existing Images
+                  </label>
+
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {existingImages.map((img) => (
+                      <div
+                        key={img.image_url}
+                        className="relative flex-shrink-0 w-24 h-24 border rounded-md overflow-hidden"
+                      >
+                        <img
+                          src={img.image_url}
+                          alt="Product"
+                          className="w-full h-full object-cover"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(img)}
+                          className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center hover:bg-red-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[9px] uppercase tracking-widest text-gray-500 font-semibold">
