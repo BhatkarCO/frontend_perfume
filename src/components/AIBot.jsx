@@ -1,85 +1,84 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Send, X, Sparkles, Bot } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import Link from "next/link";
+import Image from "next/image";
+import { Send, X, Sparkles, Bot } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const AIBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 1,
-      sender: 'bot',
-      text: 'Hello! I am your Bhatkar & Co. AI Fragrance Stylist. Tell me what notes or vibes you prefer, and I will recommend the perfect scent for you.',
+      sender: "bot",
+      text: "Hello! I am your Bhatkar & Co. AI Fragrance Stylist. Tell me what notes or vibes you prefer, and I will recommend the perfect scent for you.",
     },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  
   const handleSend = async (text) => {
-  if (!text.trim()) return;
+    if (!text.trim()) return;
 
-  // Add User Message
-  const userMsg = {
-    id: Date.now(),
-    sender: "user",
-    text,
-  };
+    // Add User Message
+    const userMsg = {
+      id: Date.now(),
+      sender: "user",
+      text,
+    };
 
-  setMessages((prev) => [...prev, userMsg]);
-  setInput("");
-  setIsTyping(true);
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setIsTyping(true);
 
-  try {
-    const response = await fetch("https://backend-perfume-10k4.onrender.com/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        session_id: "guest-user",
-        message: text,
-      }),
-    });
+    try {
+      const response = await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          session_id: "guest-user",
+          message: text,
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now() + 1,
-        sender: "bot",
-        text: data.reply,
-      },
-    ]);
-  } catch (error) {
-    console.error(error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: data.reply,
+        },
+      ]);
+    } catch (error) {
+      console.error(error);
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now() + 1,
-        sender: "bot",
-        text: "Sorry, I'm unable to connect to the AI assistant right now.",
-      },
-    ]);
-  } finally {
-    setIsTyping(false);
-  }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: "Sorry, I'm unable to connect to the AI assistant right now.",
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleQuickReply = (text) => {
     handleSend(text);
   };
-
 
   return (
     <div className="fixed bottom-20 md:bottom-6 right-6 z-40">
@@ -89,7 +88,7 @@ export const AIBot = () => {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className="bg-white border border-luxury-lightgrey rounded-md shadow-2xl w-[320px] sm:w-[350px] h-[460px] flex flex-col overflow-hidden mb-4"
+            className="bg-white border border-luxury-lightgrey rounded-md shadow-2xl w-[320px] sm:w-87.5 h-115 flex flex-col overflow-hidden mb-4"
           >
             {/* Header */}
             <div className="bg-luxury-black text-white px-4 py-3 flex items-center justify-between">
@@ -98,8 +97,12 @@ export const AIBot = () => {
                   <Sparkles className="w-4 h-4 text-gold" />
                 </div>
                 <div>
-                  <h4 className="text-[11px] uppercase tracking-widest font-bold text-white">Bhatkar & Co. AI</h4>
-                  <p className="text-[8px] tracking-wider text-gold font-semibold uppercase">Fragrance Stylist</p>
+                  <h4 className="text-[11px] uppercase tracking-widest font-bold text-white">
+                    Bhatkar & Co. AI
+                  </h4>
+                  <p className="text-[8px] tracking-wider text-gold font-semibold uppercase">
+                    Fragrance Stylist
+                  </p>
                 </div>
               </div>
               <button
@@ -116,17 +119,81 @@ export const AIBot = () => {
                 <div
                   key={msg.id}
                   className={`flex flex-col max-w-[80%] ${
-                    msg.sender === 'user' ? 'self-end items-end' : 'self-start items-start'
+                    msg.sender === "user"
+                      ? "self-end items-end"
+                      : "self-start items-start"
                   }`}
                 >
                   <div
                     className={`text-[11px] px-3.5 py-2.5 rounded-md leading-relaxed ${
-                      msg.sender === 'user'
-                        ? 'bg-luxury-black text-white rounded-br-none'
-                        : 'bg-white text-luxury-black border border-luxury-lightgrey rounded-bl-none shadow-sm'
+                      msg.sender === "user"
+                        ? "bg-luxury-black text-white rounded-br-none"
+                        : "bg-white text-luxury-black border border-luxury-lightgrey rounded-bl-none shadow-sm"
                     }`}
                   >
-                    {msg.text}
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => (
+                          <p className="mb-2 last:mb-0">{children}</p>
+                        ),
+
+                        strong: ({ children }) => (
+                          <strong className="font-bold">{children}</strong>
+                        ),
+
+                        img: ({ src, alt }) => (
+                          <img
+                            src={src}
+                            alt={alt || "Fragrance"}
+                            className="w-full max-w-[180px] h-[180px] object-cover rounded-md mt-2 mb-2 border border-luxury-lightgrey"
+                          />
+                        ),
+
+                        a: ({ href, children }) => {
+                          let finalHref = href;
+
+                          // Convert old hash-based internal URLs
+                          if (finalHref?.startsWith("#/")) {
+                            finalHref = finalHref.replace(/^#/, "");
+                          }
+
+                          // Handle all internal routes
+                          if (finalHref?.startsWith("/")) {
+                            return (
+                              <Link
+                                href={finalHref}
+                                onClick={() => setIsOpen(false)}
+                                className="text-gold underline font-semibold hover:opacity-80"
+                              >
+                                {children}
+                              </Link>
+                            );
+                          }
+
+                          // External links
+                          return (
+                            <a
+                              href={finalHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gold underline font-semibold hover:opacity-80"
+                            >
+                              {children}
+                            </a>
+                          );
+                        },
+
+                        ul: ({ children }) => (
+                          <ul className="list-disc ml-4 mb-2">{children}</ul>
+                        ),
+
+                        li: ({ children }) => (
+                          <li className="mb-1">{children}</li>
+                        ),
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
                   </div>
 
                   {/* Recommendation mini cards */}
@@ -135,13 +202,13 @@ export const AIBot = () => {
                       {msg.products.map((prod, idx) => (
                         <Link
                           key={idx}
-                          href={`/catalog`}
+                          href={`/product/${prod.slug}`}
                           onClick={() => setIsOpen(false)}
                           className="flex items-center gap-3 bg-white p-2 border border-luxury-lightgrey rounded-sm hover:border-gold transition-colors shadow-sm"
                         >
-                          <div className="relative w-8 h-8 flex-shrink-0 rounded-sm overflow-hidden bg-luxury-darkgrey">
+                          <div className="relative w-8 h-8 shrink-0 rounded-sm overflow-hidden bg-luxury-darkgrey">
                             <Image
-                              src={prod.image || '/hero-bg.jpg'}
+                              src={prod.image || "/hero-bg.jpg"}
                               alt={prod.name}
                               fill
                               sizes="32px"
@@ -149,8 +216,12 @@ export const AIBot = () => {
                             />
                           </div>
                           <div className="flex-1 min-w-0 text-left">
-                            <h5 className="text-[9px] font-bold text-luxury-black truncate uppercase tracking-wider">{prod.name}</h5>
-                            <p className="text-[8px] text-gold font-bold mt-0.5">₹{prod.price}</p>
+                            <h5 className="text-[9px] font-bold text-luxury-black truncate uppercase tracking-wider">
+                              {prod.name}
+                            </h5>
+                            <p className="text-[8px] text-gold font-bold mt-0.5">
+                              ₹{prod.price}
+                            </p>
                           </div>
                         </Link>
                       ))}
@@ -188,7 +259,8 @@ export const AIBot = () => {
 
               {isTyping && (
                 <div className="self-start flex items-center gap-1.5 bg-white border border-luxury-lightgrey rounded-md px-3 py-2 text-[10px] text-gray-400 italic shadow-sm">
-                  <Bot className="w-3 h-3 text-gold animate-bounce" /> Stylist is thinking...
+                  <Bot className="w-3 h-3 text-gold animate-bounce" /> Stylist
+                  is thinking...
                 </div>
               )}
 
@@ -200,21 +272,21 @@ export const AIBot = () => {
               <div className="px-3 py-2 flex flex-wrap gap-1.5 bg-white border-t border-luxury-lightgrey">
                 <button
                   type="button"
-                  onClick={() => handleQuickReply('Recommend a Citrus scent')}
+                  onClick={() => handleQuickReply("Recommend a Citrus scent")}
                   className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
                 >
                   🍋 Fresh/Citrus Scent
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleQuickReply('Recommend a Woody scent')}
+                  onClick={() => handleQuickReply("Recommend a Woody scent")}
                   className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
                 >
                   🪵 Woody/Oud Scent
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleQuickReply('Recommend a Floral scent')}
+                  onClick={() => handleQuickReply("Recommend a Floral scent")}
                   className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
                 >
                   🌸 Sweet Floral Scent

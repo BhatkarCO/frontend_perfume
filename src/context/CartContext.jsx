@@ -1,14 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '@/utils/api';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import api from "@/utils/api";
 
 const CartContext = createContext(null);
 
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 };
@@ -20,24 +20,24 @@ export const CartProvider = ({ children }) => {
   const [cartOpen, setCartOpen] = useState(false);
   const [coupon, setCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
-  const [shippingFee, setShippingFee] = useState(99);
+  const [shippingFee, setShippingFee] = useState(0);
 
   // Load cart from local storage
   useEffect(() => {
-    const storedCart = localStorage.getItem('bhatkar_cart');
-    const storedSaved = localStorage.getItem('bhatkar_saved');
+    const storedCart = localStorage.getItem("bhatkar_cart");
+    const storedSaved = localStorage.getItem("bhatkar_saved");
     if (storedCart) {
       try {
         setCartItems(JSON.parse(storedCart));
       } catch (e) {
-        console.error('Error parsing cart items:', e);
+        console.error("Error parsing cart items:", e);
       }
     }
     if (storedSaved) {
       try {
         setSavedItems(JSON.parse(storedSaved));
       } catch (e) {
-        console.error('Error parsing saved items:', e);
+        console.error("Error parsing saved items:", e);
       }
     }
     setIsLoaded(true);
@@ -46,19 +46,21 @@ export const CartProvider = ({ children }) => {
   // Save cart to local storage when it updates
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('bhatkar_cart', JSON.stringify(cartItems));
+      localStorage.setItem("bhatkar_cart", JSON.stringify(cartItems));
     }
   }, [cartItems, isLoaded]);
 
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('bhatkar_saved', JSON.stringify(savedItems));
+      localStorage.setItem("bhatkar_saved", JSON.stringify(savedItems));
     }
   }, [savedItems, isLoaded]);
 
   // Recalculate Totals & Shipping
   const subtotal = cartItems.reduce((sum, item) => {
-    const price = item.sale_price ? parseFloat(item.sale_price) : parseFloat(item.price);
+    const price = item.sale_price
+      ? parseFloat(item.sale_price)
+      : parseFloat(item.price);
     return sum + price * item.quantity;
   }, 0);
 
@@ -67,7 +69,7 @@ export const CartProvider = ({ children }) => {
     const calculateDiscount = async () => {
       if (coupon && subtotal > 0) {
         try {
-          const response = await api.post('/orders/apply-coupon', {
+          const response = await api.post("/orders/apply-coupon", {
             code: coupon.code,
             subtotal,
           });
@@ -85,17 +87,7 @@ export const CartProvider = ({ children }) => {
     calculateDiscount();
   }, [coupon, subtotal]);
 
-  // Automatically recalculate shipping fee
-  useEffect(() => {
-    const finalSubtotal = subtotal - discountAmount;
-    if (cartItems.length === 0) {
-      setShippingFee(0);
-    } else {
-      setShippingFee(finalSubtotal >= 1500 ? 0.00 : 99.00);
-    }
-  }, [subtotal, discountAmount, cartItems]);
-
-  const grandTotal = Math.max(0, subtotal - discountAmount + shippingFee);
+  const grandTotal = Math.max(0, subtotal - discountAmount);
 
   /**
    * Add Item to Cart
@@ -104,12 +96,18 @@ export const CartProvider = ({ children }) => {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id);
       if (existingItem) {
-        const newQty = Math.min(product.stock_quantity, existingItem.quantity + quantity);
+        const newQty = Math.min(
+          product.stock_quantity,
+          existingItem.quantity + quantity,
+        );
         return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: newQty } : item
+          item.id === product.id ? { ...item, quantity: newQty } : item,
         );
       }
-      return [...prevItems, { ...product, quantity: Math.min(product.stock_quantity, quantity) }];
+      return [
+        ...prevItems,
+        { ...product, quantity: Math.min(product.stock_quantity, quantity) },
+      ];
     });
   };
 
@@ -123,8 +121,8 @@ export const CartProvider = ({ children }) => {
     }
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      )
+        item.id === productId ? { ...item, quantity } : item,
+      ),
     );
   };
 
@@ -132,7 +130,9 @@ export const CartProvider = ({ children }) => {
    * Remove Item
    */
   const removeFromCart = (productId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item.id !== productId),
+    );
   };
 
   /**
@@ -163,7 +163,7 @@ export const CartProvider = ({ children }) => {
    */
   const applyCouponCode = async (code) => {
     try {
-      const response = await api.post('/orders/apply-coupon', {
+      const response = await api.post("/orders/apply-coupon", {
         code,
         subtotal,
       });
@@ -172,7 +172,7 @@ export const CartProvider = ({ children }) => {
       setDiscountAmount(parseFloat(discount));
       return { success: true, discount };
     } catch (error) {
-      const message = error.response?.data?.message || 'Invalid coupon code.';
+      const message = error.response?.data?.message || "Invalid coupon code.";
       return { success: false, message };
     }
   };

@@ -457,7 +457,7 @@ function AdminContent() {
 
       await api.delete(`/admin/reviews/${reviewToDelete}`);
 
-      setReviewToDelete(null); 
+      setReviewToDelete(null);
 
       await handleOpenReviews(selectedProductId);
 
@@ -1114,13 +1114,19 @@ function AdminContent() {
                             </p>
                             <p className="text-xs text-gray-500">{u.email}</p>
                           </div>
-                          <button
-                            onClick={() => handleToggleBlock(u.id, u.role)}
-                            className={`text-[9px] font-bold px-3 py-1.5 rounded-sm uppercase tracking-widest border ${u.role === "blocked" ? "border-green-500/30 text-green-600 font-semibold" : "border-red-500/30 text-red-500 font-semibold"}`}
-                            type="button"
-                          >
-                            {u.role === "blocked" ? "Unblock" : "Block"}
-                          </button>
+                          {u.id !== user?.id && (
+                            <button
+                              onClick={() => handleToggleBlock(u.id, u.role)}
+                              className={`text-[9px] font-bold px-3 py-1.5 rounded-sm uppercase tracking-widest border ${
+                                u.role === "blocked"
+                                  ? "border-green-500/30 text-green-600 font-semibold"
+                                  : "border-red-500/30 text-red-500 font-semibold"
+                              }`}
+                              type="button"
+                            >
+                              {u.role === "blocked" ? "Unblock" : "Block"}
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>

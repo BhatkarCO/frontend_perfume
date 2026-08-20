@@ -17,7 +17,7 @@ function PaymentContent() {
 
   const toast = useToast();
 
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   const {
     cartItems,
@@ -29,12 +29,64 @@ function PaymentContent() {
     clearCart,
   } = useCart();
 
+  const [shippingCharge, setShippingCharge] = useState(shippingFee);
+  const [loadingShipping, setLoadingShipping] = useState(true);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [pricingSummary, setPricingSummary] = useState({
+    deliveryCharges: 0,
+    payable: 0,
+  });
+  const [pricingDetails, setPricingDetails] = useState({});
+  const [orderPreview, setOrderPreview] = useState(null);
+  const [previewMethod, setPreviewMethod] = useState("RAZORPAY");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(null);
+
   const [paymentMethod, setPaymentMethod] = useState("RAZORPAY");
 
   const [processing, setProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
+  const finalTotal = subtotal - discountAmount + shippingCharge;
+  const displayShipping = Number(
+    pricingDetails?.delivery_charges ??
+      pricingDetails?.shipping_charge ??
+      shippingCharge,
+  );
+
+  // Calculate tax: try to get from backend, or derive it from payable
+  const derivedTax = pricingDetails?.payable
+    ? Number(pricingDetails.payable) -
+      (subtotal - discountAmount + displayShipping)
+    : 0;
+
+  const taxAmount = Number(
+    pricingDetails?.gst ??
+      pricingDetails?.tax ??
+      pricingDetails?.taxes ??
+      (derivedTax > 0 ? derivedTax : 0),
+  );
+
+  const displayTotal = Number(
+    pricingDetails?.payable > 0
+      ? pricingDetails.payable
+      : subtotal - discountAmount + displayShipping + taxAmount,
+  );
+  const summaryShipping = loadingShipping
+    ? "Calculating..."
+    : displayShipping > 0
+      ? `₹${displayShipping.toFixed(2)}`
+      : "FREE";
+  const summaryTotal =
+    loadingShipping || previewLoading
+      ? "Calculating..."
+      : `₹${displayTotal.toFixed(2)}`;
+
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push("/login?redirect=/checkout/payment");
       return;
@@ -51,7 +103,160 @@ function PaymentContent() {
       router.push("/checkout");
       return;
     }
-  }, [isAuthenticated, cartItems, addressId, router, toast]);
+  }, [
+    authLoading,
+    isAuthenticated,
+    cartItems,
+    addressId,
+    router,
+    toast,
+    orderPlaced,
+  ]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !addressId) return;
+
+    const fetchAddressDetails = async () => {
+      try {
+        const res = await api.get("/addresses");
+        const matchedAddress = res.data.find((item) => item.id === addressId);
+        setSelectedAddress(matchedAddress || null);
+      } catch (err) {
+        console.error("Unable to load address details.", err);
+      }
+    };
+
+    fetchAddressDetails();
+  }, [addressId, isAuthenticated]);
+
+  useEffect(() => {
+    if (!addressId || !selectedAddress?.postal_code) return;
+
+    const fetchShipping = async () => {
+      try {
+        setLoadingShipping(true);
+
+        const res = await api.post("/shiprocket/serviceability", {
+          deliveryPostcode: selectedAddress.postal_code,
+          cod: paymentMethod === "COD" ? 1 : 0,
+        });
+
+        const serviceabilityCharge =
+          res.data?.shippingCharge ??
+          res.data?.shipping_charge ??
+          res.data?.delivery_charges ??
+          res.data?.pricing?.delivery_charges ??
+          0;
+
+        setShippingCharge(Number(serviceabilityCharge));
+      } catch (err) {
+        toast.error(
+          err.response?.data?.message || "Unable to calculate shipping.",
+        );
+      } finally {
+        setLoadingShipping(false);
+      }
+    };
+
+    fetchShipping();
+  }, [addressId, paymentMethod, selectedAddress?.postal_code, toast]);
+
+  useEffect(() => {
+    if (
+      !isAuthenticated ||
+      !addressId ||
+      !selectedAddress?.postal_code ||
+      cartItems.length === 0 ||
+      orderPlaced
+    ) {
+      return;
+    }
+
+    if (previewMethod === paymentMethod && orderPreview) {
+      return;
+    }
+
+    const fetchOrderPreview = async () => {
+      try {
+        setPreviewLoading(true);
+        setPreviewError(null);
+
+        // Validate before making request
+        if (!addressId) {
+          console.error("addressId is missing:", addressId);
+          setPreviewError("Shipping address ID is missing.");
+          setPreviewLoading(false);
+          return;
+        }
+
+        if (!cartItems || cartItems.length === 0) {
+          console.error("cartItems is empty:", cartItems);
+          setPreviewError("Cart is empty. Please add items.");
+          setPreviewLoading(false);
+          return;
+        }
+
+        const payload = {
+          items: cartItems.map((item) => ({
+            productId: item.id,
+            quantity: item.quantity,
+          })),
+          shippingAddressId: addressId,
+          paymentMethod,
+          couponCode: coupon?.code || null,
+        };
+
+        const orderRes = await api.post("/orders/preview", payload);
+
+        console.log("✅ Order preview response:", orderRes.data);
+
+        const { pricing, shippingCharge: backendShippingCharge } =
+          orderRes.data;
+
+        const deliveryCharges = Number(
+          pricing?.delivery_charges ??
+            backendShippingCharge ??
+            shippingCharge ??
+            0,
+        );
+
+        const payableAmount = Number(
+          pricing?.payable ?? subtotal - discountAmount + deliveryCharges,
+        );
+
+        setShippingCharge(deliveryCharges);
+        setPricingSummary({ deliveryCharges, payable: payableAmount });
+        setPricingDetails(pricing || {});
+        setPreviewMethod(paymentMethod);
+        setOrderPreview(orderRes.data);
+      } catch (err) {
+        console.error(
+          "❌ Order preview failed:",
+          err.response?.data || err.message,
+        );
+        setPreviewError(
+          err.response?.data?.message ||
+            "Unable to preview order pricing at this time.",
+        );
+      } finally {
+        setPreviewLoading(false);
+      }
+    };
+
+    fetchOrderPreview();
+  }, [
+    addressId,
+    cartItems,
+    coupon?.code,
+    discountAmount,
+    isAuthenticated,
+    orderPlaced,
+    paymentMethod,
+    previewMethod,
+    selectedAddress?.postal_code,
+    shippingCharge,
+    subtotal,
+  ]);
 
   const handlePaymentSuccess = (orderId) => {
     setOrderPlaced(true);
@@ -71,18 +276,52 @@ function PaymentContent() {
     try {
       setProcessing(true);
 
-      const orderRes = await api.post("/orders/create", {
+      // Validate before making request
+      if (!addressId) {
+        toast.error("Shipping address is missing.");
+        setProcessing(false);
+        return;
+      }
+
+      if (!cartItems || cartItems.length === 0) {
+        toast.error("Cart is empty. Please add items.");
+        setProcessing(false);
+        return;
+      }
+
+      const payload = {
         items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
         })),
         shippingAddressId: addressId,
-        couponCode: coupon?.code || null,
         paymentMethod: "COD",
-      });
+        couponCode: coupon?.code || null,
+      };
 
+      const orderRes = await api.post("/orders/create", payload);
+      const orderData = orderRes.data;
+
+      const {
+        orderId,
+        pricing,
+        shippingCharge: backendShippingCharge,
+      } = orderData.data ? orderData.data : orderData;
+      const deliveryCharges = Number(
+        pricing?.delivery_charges ??
+          backendShippingCharge ??
+          shippingCharge ??
+          0,
+      );
+      const payableAmount = Number(
+        pricing?.payable ?? subtotal - discountAmount + deliveryCharges,
+      );
+
+      setShippingCharge(deliveryCharges);
+      setPricingSummary({ deliveryCharges, payable: payableAmount });
+      setPricingDetails(pricing || {});
       setProcessing(false);
-      handlePaymentSuccess(orderRes.data.orderId);
+      handlePaymentSuccess(orderId);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to place COD order.");
     } finally {
@@ -97,18 +336,56 @@ function PaymentContent() {
     try {
       setProcessing(true);
 
-      const orderRes = await api.post("/orders/create", {
+      // Validate before making request
+      if (!addressId) {
+        toast.error("Shipping address is missing.");
+        setProcessing(false);
+        return;
+      }
+
+      if (!cartItems || cartItems.length === 0) {
+        toast.error("Cart is empty. Please add items.");
+        setProcessing(false);
+        return;
+      }
+
+      const payload = {
         items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
         })),
         shippingAddressId: addressId,
-        couponCode: coupon?.code || null,
         paymentMethod: "RAZORPAY",
-      });
+        couponCode: coupon?.code || null,
+      };
 
-      const { orderId, razorpayOrderId, amount, currency, isMock } =
-        orderRes.data;
+      const orderRes = await api.post("/orders/create", payload);
+      const orderData = orderRes.data;
+
+      const {
+        orderId,
+        razorpayOrderId,
+        amount,
+        currency,
+        isMock,
+        pricing,
+        shippingCharge: backendShippingCharge,
+      } = orderData;
+      const deliveryCharges = Number(
+        pricing?.delivery_charges ??
+          backendShippingCharge ??
+          shippingCharge ??
+          0,
+      );
+      const payableAmount = Number(
+        pricing?.payable ??
+          amount ??
+          subtotal - discountAmount + deliveryCharges,
+      );
+
+      setShippingCharge(deliveryCharges);
+      setPricingSummary({ deliveryCharges, payable: payableAmount });
+      setPricingDetails(pricing || {});
 
       if (isMock) {
         await api.post("/orders/verify", {
@@ -280,23 +557,26 @@ function PaymentContent() {
 
             {discountAmount > 0 && (
               <div className="flex justify-between text-green-600">
-                <span>Discount</span>
+                <span>Promo discount</span>
                 <span>- ₹{discountAmount.toFixed(0)}</span>
               </div>
             )}
 
+            <div className="flex justify-between text-gray-700">
+              <span>GST / Tax</span>
+              <span>₹{taxAmount.toFixed(2)}</span>
+            </div>
+
             <div className="flex justify-between">
-              <span>Shipping</span>
-              <span>
-                {shippingFee > 0 ? `₹${shippingFee.toFixed(0)}` : "FREE"}
-              </span>
+              <span>Shipping charge</span>
+              <span>{summaryShipping}</span>
             </div>
 
             <hr />
 
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span>₹{grandTotal.toFixed(0)}</span>
+              <span>{summaryTotal}</span>
             </div>
           </div>
 

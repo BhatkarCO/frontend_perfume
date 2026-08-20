@@ -29,7 +29,7 @@ export default function Checkout() {
     grandTotal,
     clearCart,
   } = useCart();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const toast = useToast();
 
   const [addresses, setAddresses] = useState([]);
@@ -49,10 +49,41 @@ export default function Checkout() {
   // Checkout process state
   const [processingOrder, setProcessingOrder] = useState(false);
   const [confirmedOrderId, setConfirmedOrderId] = useState("");
+  const [pricing, setPricing] = useState(null);
+  const [orderPreview, setOrderPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
+
+  const displayShipping = Number(
+    pricing?.delivery_charges ?? pricing?.shipping_charge ?? shippingFee ?? 0,
+  );
+  const displayTax = Number(
+    pricing?.gst ?? pricing?.tax ?? pricing?.taxes ?? 0,
+  );
+  const displayTotal = Number(
+    pricing?.payable ??
+      subtotal - discountAmount + displayShipping + displayTax,
+  );
+  const summaryShipping = previewLoading
+    ? "Calculating..."
+    : displayShipping > 0
+      ? `₹${displayShipping.toFixed(2)}`
+      : "FREE";
+  const summaryTax = previewLoading
+    ? "Calculating..."
+    : `₹${displayTax.toFixed(2)}`;
+  const summaryTotal = previewLoading
+    ? "Calculating..."
+    : `₹${displayTotal.toFixed(2)}`;
 
   // Enforce auth
   useEffect(() => {
+    // Wait for auth to finish loading before checking authentication
+    if (loading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       toast.info("Please sign in to proceed with checkout.");
       router.push("/login?redirect=/checkout");
@@ -66,7 +97,15 @@ export default function Checkout() {
     }
 
     fetchAddresses();
-  }, [isAuthenticated, cartItems, step, router]);
+  }, [
+    loading,
+    isAuthenticated,
+    cartItems,
+    step,
+    router,
+    orderCompleted,
+    toast,
+  ]);
 
   const fetchAddresses = async () => {
     try {
@@ -80,6 +119,50 @@ export default function Checkout() {
       console.error("Error fetching addresses:", err);
     }
   };
+
+  useEffect(() => {
+    if (!selectedAddressId || cartItems.length === 0) return;
+
+    const fetchPricingPreview = async () => {
+      try {
+        setPreviewLoading(true);
+        setPreviewError(null);
+
+        const payload = {
+          items: cartItems.map((item) => ({
+            productId: item.id,
+            quantity: item.quantity,
+          })),
+          shippingAddressId: selectedAddressId,
+          paymentMethod: "RAZORPAY",
+        };
+
+        // Only add coupon code if it exists
+        if (coupon?.code) {
+          payload.couponCode = coupon.code;
+        }
+
+        console.log("Sending order preview payload:", payload);
+
+        const response = await api.post("/orders/preview", payload);
+
+        console.log("Order preview response:", response.data);
+        setPricing(response.data.pricing || null);
+        setOrderPreview(response.data);
+      } catch (err) {
+        console.error("Order preview pricing failed:", err);
+        console.error("Error response:", err.response?.data);
+        setPreviewError(
+          err.response?.data?.message ||
+            "Unable to calculate shipping and tax preview.",
+        );
+      } finally {
+        setPreviewLoading(false);
+      }
+    };
+
+    fetchPricingPreview();
+  }, [selectedAddressId, cartItems.length, subtotal, coupon?.code]);
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
@@ -129,17 +212,26 @@ export default function Checkout() {
 
     setProcessingOrder(true);
     try {
-      const orderRes = await api.post("/orders/create", {
+      const payload = {
         items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
         })),
         shippingAddressId: selectedAddressId,
-        couponCode: coupon?.code || null,
-      });
+        paymentMethod: "RAZORPAY",
+      };
 
-      const { orderId, razorpayOrderId, amount, currency, isMock } =
+      // Only add coupon code if it exists
+      if (coupon?.code) {
+        payload.couponCode = coupon.code;
+      }
+
+      const orderRes = await api.post("/orders/create", payload);
+
+      const { orderId, razorpayOrderId, amount, currency, isMock, pricing } =
         orderRes.data;
+
+      setPricing(pricing);
 
       if (isMock) {
         setTimeout(async () => {
@@ -425,15 +517,31 @@ export default function Checkout() {
                 </div>
               )}
               <div className="flex justify-between">
-                <span>Shipping</span>
+                <span>Shipping charge</span>
                 <span className="text-luxury-black font-semibold">
-                  {shippingFee > 0 ? `₹${shippingFee.toFixed(0)}` : "FREE"}
+                  {previewLoading
+                    ? "Calculating..."
+                    : displayShipping > 0
+                      ? `₹${displayShipping.toFixed(2)}`
+                      : "FREE"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>GST / Tax</span>
+                <span className="text-luxury-black font-semibold">
+                  {previewLoading
+                    ? "Calculating..."
+                    : `₹${displayTax.toFixed(2)}`}
                 </span>
               </div>
               <hr className="border-luxury-lightgrey my-1" />
               <div className="flex justify-between font-bold text-xs uppercase tracking-wider text-luxury-black">
                 <span>Grand Total</span>
-                <span>₹{grandTotal.toFixed(0)}</span>
+                <span>
+                  {previewLoading
+                    ? "Calculating..."
+                    : `₹${displayTotal.toFixed(2)}`}
+                </span>
               </div>
             </div>
           </div>
@@ -546,15 +654,17 @@ export default function Checkout() {
                 </div>
               )}
               <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>
-                  {shippingFee > 0 ? `₹${shippingFee.toFixed(0)}` : "FREE"}
-                </span>
+                <span>Shipping charge</span>
+                <span>{summaryShipping}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>GST / Tax</span>
+                <span>{summaryTax}</span>
               </div>
               <hr className="border-luxury-lightgrey my-1" />
               <div className="flex justify-between font-bold text-xs uppercase tracking-wider text-luxury-black">
                 <span>Total Amount</span>
-                <span>₹{grandTotal.toFixed(0)}</span>
+                <span>{summaryTotal}</span>
               </div>
             </div>
 
@@ -562,10 +672,10 @@ export default function Checkout() {
               <CreditCard className="w-5 h-5 text-gold shrink-0" />
               <div>
                 <h4 className="text-[9px] font-bold text-luxury-black uppercase tracking-wider">
-                  Secure Payment Gateway
+                  FROM OUR HOUSE TO YOURS
                 </h4>
                 <p className="text-[9px] text-gray-400 mt-0.5">
-                  Payments are encrypted and processed securely by Razorpay.
+                  Every order is prepared with care and attention to detail.
                 </p>
               </div>
             </div>

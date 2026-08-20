@@ -330,6 +330,58 @@ function DashboardContent() {
     ];
     return steps.indexOf(status);
   };
+
+  const getOrderValue = (order, ...keys) => {
+    for (const key of keys) {
+      const value = order?.[key];
+      if (value !== undefined && value !== null && value !== "") {
+        return value;
+      }
+    }
+    return "";
+  };
+
+  const shiprocketDetails = activeOrder
+    ? [
+        {
+          label: "AWB",
+          value: getOrderValue(activeOrder, "shiprocket_awb", "shiprocketAwb"),
+        },
+        {
+          label: "Courier",
+          value: getOrderValue(
+            activeOrder,
+            "shiprocket_courier_name",
+            "shiprocketCourierName",
+          ),
+        },
+        {
+          label: "Status",
+          value: getOrderValue(
+            activeOrder,
+            "shiprocket_status",
+            "shiprocketStatus",
+          ),
+        },
+        {
+          label: "Shiprocket Order ID",
+          value: getOrderValue(
+            activeOrder,
+            "shiprocket_order_id",
+            "shiprocketOrderId",
+          ),
+        },
+        {
+          label: "Shipment ID",
+          value: getOrderValue(
+            activeOrder,
+            "shiprocket_shipment_id",
+            "shiprocketShipmentId",
+          ),
+        },
+      ].filter((detail) => detail.value)
+    : [];
+
   useEffect(() => {
     if (activeOrder?.items) {
       console.log(activeOrder.items);
@@ -718,7 +770,7 @@ function DashboardContent() {
                             </div>
                             <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                               <span className="text-sm font-bold text-luxury-black">
-                                ₹{parseFloat(ord.total_amount).toFixed(0)}
+                                ₹{parseFloat(ord.total_amount).toFixed(2)}
                               </span>
                               <div className="flex gap-2">
                                 <button
@@ -775,7 +827,7 @@ function DashboardContent() {
                       <div className="text-right">
                         <p>
                           <strong>Grand Total:</strong> ₹
-                          {parseFloat(activeOrder.total_amount).toFixed(0)}
+                          {parseFloat(activeOrder.total_amount).toFixed(2)}
                         </p>
                         <p className="mt-1">
                           <strong>Status:</strong>{" "}
@@ -895,7 +947,7 @@ function DashboardContent() {
                                 <p className="text-[10px] text-gray-400 font-light">
                                   Qty: {item.quantity} • ₹
                                   {parseFloat(item.price_at_purchase).toFixed(
-                                    0,
+                                    2,
                                   )}{" "}
                                   each
                                 </p>
@@ -905,12 +957,30 @@ function DashboardContent() {
                                 {(
                                   parseFloat(item.price_at_purchase) *
                                   item.quantity
-                                ).toFixed(0)}
+                                ).toFixed(2)}
                               </span>
                             </div>
                           ))}
                       </div>
                     </div>
+
+                    {shiprocketDetails.length > 0 && (
+                      <div className="border-t border-luxury-lightgrey pt-4 text-xs text-gray-500 font-light">
+                        <h4 className="text-[10px] uppercase tracking-widest text-luxury-black font-bold mb-2">
+                          Shipment Details
+                        </h4>
+                        <div className="flex flex-col gap-1">
+                          {shiprocketDetails.map((detail) => (
+                            <p key={detail.label}>
+                              <span className="font-semibold text-luxury-black">
+                                {detail.label}:
+                              </span>{" "}
+                              {detail.value}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Shipping Destination */}
                     <div className="border-t border-luxury-lightgrey pt-4 text-xs text-gray-500 font-light">

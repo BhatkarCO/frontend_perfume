@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
@@ -8,25 +8,37 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 
 function LoginContent() {
-  const { login, logout } = useAuth();
+  const { login, logout, isAuthenticated, loading } = useAuth();
   const toast = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const redirectPath = searchParams.get("redirect") || "/dashboard";
+
+  useEffect(() => {
+    // Wait for auth to finish loading before checking authentication
+    if (loading) {
+      return;
+    }
+
+    // If user is already authenticated, redirect to the redirect path
+    if (isAuthenticated) {
+      router.replace(redirectPath);
+    }
+  }, [loading, isAuthenticated, router, redirectPath]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) return;
 
-    setLoading(true);
+    setFormLoading(true);
     const result = await login(email, password);
-    setLoading(false);
+    setFormLoading(false);
 
     if (result.success) {
       if (result.user.role === "admin") {
@@ -38,7 +50,8 @@ function LoginContent() {
       if (!result.user.is_verified) {
         toast.info("Please verify your email to complete registration.");
         router.push("/verify-email");
-      } else { typeof window === "undefined"
+      } else {
+        typeof window === "undefined";
         router.push(redirectPath);
       }
     } else {
@@ -117,10 +130,10 @@ function LoginContent() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={formLoading}
             className="btn-gold w-full py-3.5 rounded-sm flex items-center justify-center gap-2 uppercase tracking-widest font-bold text-xs mt-2"
           >
-            {loading ? "Signing In..." : "Sign In"}{" "}
+            {formLoading ? "Signing In..." : "Sign In"}{" "}
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

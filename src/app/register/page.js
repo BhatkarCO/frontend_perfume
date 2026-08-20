@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, User, Phone, ArrowRight, Eye, EyeOff } from "lucide-react";
@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, isAuthenticated, loading } = useAuth();
   const toast = useToast();
   const router = useRouter();
 
@@ -17,9 +17,21 @@ export default function Register() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    // Wait for auth to finish loading before checking authentication
+    if (loading) {
+      return;
+    }
+
+    // If user is already authenticated, redirect to dashboard
+    if (isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [loading, isAuthenticated, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,9 +42,9 @@ export default function Register() {
       return;
     }
 
-    setLoading(true);
+    setFormLoading(true);
     const result = await register(name, email, password, phone);
-    setLoading(false);
+    setFormLoading(false);
 
     if (result.success) {
       localStorage.setItem("registering_email", email);
@@ -166,10 +178,10 @@ export default function Register() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={formLoading}
             className="btn-gold w-full py-3.5 rounded-sm flex items-center justify-center gap-2 uppercase tracking-widest font-bold text-xs mt-2"
           >
-            {loading ? "Registering..." : "Register"}{" "}
+            {formLoading ? "Registering..." : "Register"}{" "}
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
