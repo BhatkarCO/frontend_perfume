@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   User,
+  Package,
   MapPin,
   ShoppingBag,
   Heart,
@@ -16,7 +17,7 @@ import {
   Eye,
   EyeOff,
   Truck,
-  Home as HomeIcon,
+  Home,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
@@ -322,12 +323,14 @@ function DashboardContent() {
 
   const getStatusStepIndex = (status) => {
     const steps = [
-      "Pending",
-      "Confirmed",
-      "Processing",
-      "Shipped",
-      "Delivered",
+      "AWB_ASSIGNED",
+      "PICKUP_SCHEDULED",
+      "PICKED_UP",
+      "IN_TRANSIT",
+      "OUT_FOR_DELIVERY",
+      "DELIVERED",
     ];
+
     return steps.indexOf(status);
   };
 
@@ -750,14 +753,19 @@ function DashboardContent() {
                                 </span>
                                 <span
                                   className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded ${
-                                    ord.status === "Delivered"
+                                    (ord.shiprocket_status ||
+                                      ord.shiprocketStatus) === "DELIVERED"
                                       ? "bg-green-500/10 text-green-600"
-                                      : ord.status === "Cancelled"
+                                      : (ord.shiprocket_status ||
+                                            ord.shiprocketStatus) ===
+                                          "CANCELLED"
                                         ? "bg-red-500/10 text-red-500"
                                         : "bg-yellow-500/10 text-yellow-600"
                                   }`}
                                 >
-                                  {ord.status}
+                                  {ord.shiprocket_status ||
+                                    ord.shiprocketStatus ||
+                                    ord.status}
                                 </span>
                               </div>
                               <span className="text-[9px] text-gray-400 block mt-1 uppercase tracking-wider font-semibold">
@@ -831,13 +839,20 @@ function DashboardContent() {
                         </p>
                         <p className="mt-1">
                           <strong>Status:</strong>{" "}
-                          {activeOrder.status.toUpperCase()}
+                          {(
+                            activeOrder.shiprocket_status ||
+                            activeOrder.shiprocketStatus ||
+                            activeOrder.status
+                          ).toUpperCase()}
                         </p>
                       </div>
                     </div>
 
                     {/* Visual Tracker Bar */}
-                    {activeOrder.status !== "Cancelled" && (
+                    {!["CANCELLED", "RTO", "RTO_DELIVERED", "LOST"].includes(
+                      activeOrder.shiprocket_status ||
+                        activeOrder.shiprocketStatus,
+                    ) && (
                       <div className="my-6">
                         <h4 className="text-[10px] uppercase tracking-widest text-luxury-black font-bold mb-4 text-center sm:text-left">
                           Delivery Progress
@@ -848,29 +863,48 @@ function DashboardContent() {
                             <div
                               className="bg-gold h-full transition-all duration-500"
                               style={{
-                                width: `${(getStatusStepIndex(activeOrder.status) / 4) * 100}%`,
+                                width: `${
+                                  (getStatusStepIndex(
+                                    activeOrder.shiprocket_status ||
+                                      activeOrder.shiprocketStatus,
+                                  ) /
+                                    5) *
+                                  100
+                                }%`,
                               }}
                             />
                           </div>
 
-                          {/* Steps */}
+                          {/* Shipping Steps */}
                           {[
-                            "Pending",
-                            "Confirmed",
-                            "Processing",
-                            "Shipped",
-                            "Delivered",
+                            "AWB_ASSIGNED",
+                            "PICKUP_SCHEDULED",
+                            "PICKED_UP",
+                            "IN_TRANSIT",
+                            "OUT_FOR_DELIVERY",
+                            "DELIVERED",
                           ].map((step, idx) => {
                             const activeStepIdx = getStatusStepIndex(
-                              activeOrder.status,
+                              activeOrder.shiprocket_status ||
+                                activeOrder.shiprocketStatus,
                             );
-                            const isDone = idx <= activeStepIdx;
+
+                            const isDone = idx < activeStepIdx;
                             const isCurrent = idx === activeStepIdx;
+
+                            const stepLabels = {
+                              AWB_ASSIGNED: "AWB Assigned",
+                              PICKUP_SCHEDULED: "Pickup Scheduled",
+                              PICKED_UP: "Picked Up",
+                              IN_TRANSIT: "In Transit",
+                              OUT_FOR_DELIVERY: "Out for Delivery",
+                              DELIVERED: "Delivered",
+                            };
 
                             return (
                               <div
                                 key={step}
-                                className="flex sm:flex-col items-center gap-3 sm:gap-1.5 z-10"
+                                className="flex flex-col items-center gap-3 sm:gap-1.5 z-10"
                               >
                                 <div
                                   className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
@@ -881,32 +915,39 @@ function DashboardContent() {
                                         : "border-gray-300 bg-luxury-deep text-gray-400"
                                   }`}
                                 >
-                                  {step === "Pending" && (
+                                  {step === "AWB_ASSIGNED" && (
+                                    <Package className="w-4 h-4" />
+                                  )}
+
+                                  {step === "PICKUP_SCHEDULED" && (
                                     <Clock className="w-4 h-4" />
                                   )}
-                                  {step === "Confirmed" && (
+
+                                  {step === "PICKED_UP" && (
                                     <CheckCircle className="w-4 h-4" />
                                   )}
-                                  {step === "Processing" && (
-                                    <Edit className="w-4 h-4" />
-                                  )}
-                                  {step === "Shipped" && (
+
+                                  {step === "IN_TRANSIT" && (
                                     <Truck className="w-4 h-4" />
                                   )}
-                                  {step === "Delivered" && (
-                                    <HomeIcon className="w-4 h-4" />
+
+                                  {step === "OUT_FOR_DELIVERY" && (
+                                    <MapPin className="w-4 h-4" />
+                                  )}
+
+                                  {step === "DELIVERED" && (
+                                    <Home className="w-4 h-4" />
                                   )}
                                 </div>
+
                                 <span
-                                  className={`text-[9px] uppercase tracking-widest font-bold ${
-                                    isCurrent
-                                      ? "text-gold"
-                                      : isDone
-                                        ? "text-gray-700"
-                                        : "text-gray-400"
+                                  className={`text-[10px] sm:text-xs tracking-wider text-center ${
+                                    isCurrent || isDone
+                                      ? "text-gold font-medium"
+                                      : "text-gray-400"
                                   }`}
                                 >
-                                  {step}
+                                  {stepLabels[step]}
                                 </span>
                               </div>
                             );
