@@ -280,19 +280,33 @@ function DashboardContent() {
 
   const handleDownloadInvoice = async (orderId) => {
     try {
-      toast.info("Downloading invoice PDF...");
+      toast.info("Generating invoice...");
+
       const response = await api.get(`/orders/invoice/${orderId}`, {
         responseType: "blob",
       });
-      const blob = new Blob([response.data], { type: "application/pdf" });
+
+      const blob = new Blob([response.data], {
+        type: "application/pdf",
+      });
+
+      const url = window.URL.createObjectURL(blob);
 
       const link = document.createElement("a");
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `Invoice_Bhatkar_Co_${orderId}.pdf`;
+      link.href = url;
+      link.download = `Invoice_Bhatkar_${orderId}.pdf`;
+
+      document.body.appendChild(link);
       link.click();
-      toast.success("Invoice downloaded.");
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Invoice downloaded successfully.");
     } catch (err) {
-      toast.error("Failed to download invoice.");
+      console.error("Invoice error:", err);
+
+      toast.error(err.response?.data?.message || "Failed to generate invoice.");
     }
   };
 
