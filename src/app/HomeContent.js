@@ -1,15 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { ArrowRight, ShoppingBag, ShieldCheck, Heart, Sparkles, Star } from 'lucide-react';
-import api from '@/utils/api';
-import { useCart } from '@/context/CartContext';
-import { useToast } from '@/context/ToastContext';
-import { motion } from 'framer-motion';
-
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  ShoppingBag,
+  ShieldCheck,
+  Heart,
+  Sparkles,
+  Star,
+} from "lucide-react";
+import api from "@/utils/api";
+import { useCart } from "@/context/CartContext";
+import { useToast } from "@/context/ToastContext";
+import { motion } from "framer-motion";
 
 export default function HomeContent() {
   const router = useRouter();
@@ -24,14 +30,14 @@ export default function HomeContent() {
       try {
         // Fetch Best Sellers and New Arrivals concurrently
         const [bsRes, naRes] = await Promise.all([
-          api.get('/products?sortBy=best-selling&limit=4'),
-          api.get('/products?sortBy=latest&limit=4')
+          api.get("/products?sortBy=best-selling&limit=4"),
+          api.get("/products?sortBy=latest&limit=4"),
         ]);
-        
+
         setBestSellers(bsRes.data.products);
         setNewArrivals(naRes.data.products);
       } catch (err) {
-        console.error('Error fetching home page products:', err);
+        console.error("Error fetching home page products:", err);
       } finally {
         setLoading(false);
       }
@@ -50,26 +56,26 @@ export default function HomeContent() {
   const fadeInUp = {
     initial: { opacity: 0, y: 30 },
     whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, margin: '-100px' },
-    transition: { duration: 0.6 }
+    viewport: { once: true, margin: "-100px" },
+    transition: { duration: 0.6 },
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-luxury-deep">
-      
       {/* 1. HERO BANNER */}
-      <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image Overlay */}
         <Image
-          src="/hero-bg.jpg"
+          src="/hero-bg.webp"
           alt="Bhatkar & Co. Luxury Perfumes Background"
           fill
           priority
           sizes="100vw"
+          unoptimized
           className="object-cover"
         />
         {/* Dark elegant overlay with backdrop blur covering the entire background */}
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2.5px]" /> 
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2.5px]" />
 
         {/* Hero Content */}
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center gap-6 z-10">
@@ -81,7 +87,7 @@ export default function HomeContent() {
           >
             Bhatkar &amp; Co.
           </motion.span>
-          
+
           <motion.h1
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -90,16 +96,18 @@ export default function HomeContent() {
           >
             The Artistry of Scents
           </motion.h1>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
             className="text-xs sm:text-sm text-gray-200 max-w-2xl leading-relaxed font-light uppercase tracking-wider"
           >
-            Indulge in our exquisite range of luxury Eau de Parfums, solid wax concentrates, and traditional pure attars. Long-lasting, cruelty-free, and handcrafted for distinction.
+            Indulge in our exquisite range of luxury Eau de Parfums, solid wax
+            concentrates, and traditional pure attars. Long-lasting,
+            cruelty-free, and handcrafted for distinction.
           </motion.p>
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -107,7 +115,7 @@ export default function HomeContent() {
             className="flex flex-col sm:flex-row gap-4 mt-2"
           >
             <button
-              onClick={() => router.push('/catalog')}
+              onClick={() => router.push("/catalog")}
               className="btn-gold px-8 py-3.5 text-xs font-bold uppercase tracking-widest rounded-sm flex items-center gap-2"
             >
               Explore Collections <ArrowRight className="w-4 h-4" />
@@ -125,17 +133,42 @@ export default function HomeContent() {
       {/* 2. FEATURED COLLECTIONS GRID */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeInUp} className="text-center mb-12 flex flex-col items-center">
-            <h2 className="text-2xl sm:text-3xl font-bold font-playfair tracking-wider mb-3 uppercase">Featured Collections</h2>
+          <motion.div
+            {...fadeInUp}
+            className="text-center mb-12 flex flex-col items-center"
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold font-playfair tracking-wider mb-3 uppercase">
+              Featured Collections
+            </h2>
             <div className="w-16 h-0.5 bg-gold" />
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: 'Signature Collection', slug: 'signature-collection', image: 'Signature_Bottle.png', tagline: 'Exclusive & Majestic' },
-              { name: 'Fresh Collection', slug: 'fresh-collection', image: 'Vibe2.png', tagline: 'Light & Refreshing' },
-              { name: 'Floral Collection', slug: 'floral-collection', image: 'Bold2.png', tagline: 'Delicate & Sweet' },
-              { name: 'Woody Collection', slug: 'woody-collection', image: 'Deep2.png', tagline: 'Warm & Earthy' }
+              {
+                name: "Signature Collection",
+                slug: "signature-collection",
+                image: "Signature_Bottle.webp",
+                tagline: "Exclusive & Majestic",
+              },
+              {
+                name: "Fresh Collection",
+                slug: "fresh-collection",
+                image: "Vibe2.webp",
+                tagline: "Light & Refreshing",
+              },
+              {
+                name: "Floral Collection",
+                slug: "floral-collection",
+                image: "Bold2.webp",
+                tagline: "Delicate & Sweet",
+              },
+              {
+                name: "Woody Collection",
+                slug: "woody-collection",
+                image: "Deep2.webp",
+                tagline: "Warm & Earthy",
+              },
             ].map((col, idx) => (
               <motion.div
                 key={col.slug}
@@ -146,15 +179,25 @@ export default function HomeContent() {
                 onClick={() => router.push(`/catalog?category=${col.slug}`)}
                 className="group relative h-80 rounded-sm overflow-hidden cursor-pointer shadow-sm border border-luxury-lightgrey hover:border-gold transition-all"
               >
-                <div 
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                  style={{ backgroundImage: `url('${col.image}')` }}
-                />
+                <div className="absolute inset-0">
+                  <Image
+                    src={`/${col.image}`}
+                    alt={col.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    unoptimized
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-                
+
                 <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-1">
-                  <span className="text-[9px] tracking-widest text-gold font-bold uppercase">{col.tagline}</span>
-                  <h3 className="font-playfair text-lg text-white font-bold tracking-wide group-hover:text-gold transition-colors">{col.name}</h3>
+                  <span className="text-[9px] tracking-widest text-gold font-bold uppercase">
+                    {col.tagline}
+                  </span>
+                  <h3 className="font-playfair text-lg text-white font-bold tracking-wide group-hover:text-gold transition-colors">
+                    {col.name}
+                  </h3>
                 </div>
               </motion.div>
             ))}
@@ -165,18 +208,27 @@ export default function HomeContent() {
       {/* 3. BEST SELLERS */}
       <section className="py-20 bg-luxury-deep border-y border-luxury-lightgrey">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeInUp} className="text-center mb-12 flex flex-col items-center">
-            <h2 className="text-2xl sm:text-3xl font-bold font-playfair tracking-wider mb-3 uppercase">Our Best Sellers</h2>
+          <motion.div
+            {...fadeInUp}
+            className="text-center mb-12 flex flex-col items-center"
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold font-playfair tracking-wider mb-3 uppercase">
+              Our Best Sellers
+            </h2>
             <div className="w-16 h-0.5 bg-gold" />
           </motion.div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-20 text-gold text-xs uppercase tracking-widest font-semibold">Loading perfumes...</div>
+            <div className="flex justify-center items-center py-20 text-gold text-xs uppercase tracking-widest font-semibold">
+              Loading perfumes...
+            </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {bestSellers.map((prod) => {
                 const price = parseFloat(prod.price);
-                const salePrice = prod.sale_price ? parseFloat(prod.sale_price) : null;
+                const salePrice = prod.sale_price
+                  ? parseFloat(prod.sale_price)
+                  : null;
                 return (
                   <Link
                     key={prod.id}
@@ -186,7 +238,10 @@ export default function HomeContent() {
                     {/* Image */}
                     <div className="relative aspect-[3/4] overflow-hidden bg-luxury-darkgrey">
                       <Image
-                        src={prod.primary_image || 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400'}
+                        src={
+                          prod.primary_image ||
+                          "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400"
+                        }
                         alt={prod.name}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
@@ -197,7 +252,7 @@ export default function HomeContent() {
                           Sale
                         </span>
                       )}
-                      
+
                       {/* Fast Add CTA Overlay */}
                       {prod.stock_quantity > 0 && (
                         <button
@@ -219,23 +274,31 @@ export default function HomeContent() {
                           {prod.name}
                         </h3>
                       </div>
-                      
+
                       <div className="flex items-center justify-between mt-1">
                         {/* Rating */}
                         <div className="flex items-center gap-1">
                           <Star className="w-3.5 h-3.5 text-gold fill-current" />
-                          <span className="text-[9px] text-gray-500 font-bold">{parseFloat(prod.rating).toFixed(1)}</span>
+                          <span className="text-[9px] text-gray-500 font-bold">
+                            {parseFloat(prod.rating).toFixed(1)}
+                          </span>
                         </div>
 
                         {/* Price */}
                         <div className="flex items-center gap-2">
                           {salePrice ? (
                             <>
-                              <span className="text-xs text-gray-400 line-through">₹{price.toFixed(0)}</span>
-                              <span className="text-xs font-bold text-gold-dark">₹{salePrice.toFixed(0)}</span>
+                              <span className="text-xs text-gray-400 line-through">
+                                ₹{price.toFixed(0)}
+                              </span>
+                              <span className="text-xs font-bold text-gold-dark">
+                                ₹{salePrice.toFixed(0)}
+                              </span>
                             </>
                           ) : (
-                            <span className="text-xs font-bold text-luxury-black">₹{price.toFixed(0)}</span>
+                            <span className="text-xs font-bold text-luxury-black">
+                              ₹{price.toFixed(0)}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -259,10 +322,11 @@ export default function HomeContent() {
             className="relative aspect-square max-w-sm mx-auto w-full rounded-sm overflow-hidden border border-luxury-lightgrey shadow-md"
           >
             <Image
-              src="/philosophy-plan.png"
+              src="/philosophy-plan.webp"
               alt="Bhatkar &amp; Co. Aura Perfume - Natural Freshness"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
+              unoptimized
               className="object-cover object-center"
             />
           </motion.div>
@@ -274,26 +338,49 @@ export default function HomeContent() {
             transition={{ duration: 0.7 }}
             className="flex flex-col gap-6"
           >
-            <span className="text-xs uppercase tracking-[0.35em] text-gold font-bold">Our Philosophy</span>
-            <h2 className="text-2xl sm:text-3xl font-playfair font-bold uppercase tracking-wider">The Bhatkar &amp; Co. Legacy</h2>
+            <span className="text-xs uppercase tracking-[0.35em] text-gold font-bold">
+              Our Philosophy
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-playfair font-bold uppercase tracking-wider">
+              The Bhatkar &amp; Co. Legacy
+            </h2>
             <p className="text-gray-500 leading-relaxed text-xs font-light">
-              Fragrance is not just a cosmetic; it is an invisible armor, a silent language, and a sensory memory that lasts forever. At Bhatkar &amp; Co. Perfumes, we set out to demystify luxury perfumery.
+              Fragrance is not just a cosmetic; it is an invisible armor, a
+              silent language, and a sensory memory that lasts forever. At
+              Bhatkar &amp; Co. Perfumes, we set out to demystify luxury
+              perfumery.
             </p>
             <p className="text-gray-500 leading-relaxed text-xs font-light">
-              We believe every fragrance should capture the beauty and freshness of nature. Inspired by blooming flowers, lush greenery, and the gentle warmth of sunlight, our perfumes are thoughtfully crafted to provide a refreshing, long-lasting scent that feels natural and elegant.
+              We believe every fragrance should capture the beauty and freshness
+              of nature. Inspired by blooming flowers, lush greenery, and the
+              gentle warmth of sunlight, our perfumes are thoughtfully crafted
+              to provide a refreshing, long-lasting scent that feels natural and
+              elegant.
             </p>
             <div className="flex gap-8 mt-2">
               <div>
-                <span className="block text-xl font-bold font-playfair text-luxury-black">24h+</span>
-                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">Longevity</span>
+                <span className="block text-xl font-bold font-playfair text-luxury-black">
+                  24h+
+                </span>
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">
+                  Longevity
+                </span>
               </div>
               <div>
-                <span className="block text-xl font-bold font-playfair text-luxury-black">100%</span>
-                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">Cruelty-Free</span>
+                <span className="block text-xl font-bold font-playfair text-luxury-black">
+                  100%
+                </span>
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">
+                  Cruelty-Free
+                </span>
               </div>
               <div>
-                <span className="block text-xl font-bold font-playfair text-luxury-black">Handmade</span>
-                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">In India</span>
+                <span className="block text-xl font-bold font-playfair text-luxury-black">
+                  Handmade
+                </span>
+                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">
+                  In India
+                </span>
               </div>
             </div>
           </motion.div>
@@ -304,10 +391,26 @@ export default function HomeContent() {
       <section className="py-16 bg-luxury-darkgrey border-t border-luxury-lightgrey">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {[
-            { title: 'Premium Oils', desc: 'Sourced from the finest global distilleries for ultimate purity.', icon: Sparkles },
-            { title: 'Long-Lasting Aura', desc: 'High oil concentration ensures deep sillage and longevity.', icon: Heart },
-            { title: 'Cruelty-Free & Safe', desc: 'Crafted without animal testing or harsh skin-irritants.', icon: ShieldCheck },
-            { title: 'Free Shipping', desc: 'Complimentary shipping across India on orders above ₹1500.', icon: ShoppingBag }
+            {
+              title: "Premium Oils",
+              desc: "Sourced from the finest global distilleries for ultimate purity.",
+              icon: Sparkles,
+            },
+            {
+              title: "Long-Lasting Aura",
+              desc: "High oil concentration ensures deep sillage and longevity.",
+              icon: Heart,
+            },
+            {
+              title: "Cruelty-Free & Safe",
+              desc: "Crafted without animal testing or harsh skin-irritants.",
+              icon: ShieldCheck,
+            },
+            {
+              title: "Free Shipping",
+              desc: "Complimentary shipping across India on orders above ₹1500.",
+              icon: ShoppingBag,
+            },
           ].map((benefit, idx) => {
             const Icon = benefit.icon;
             return (
@@ -322,8 +425,12 @@ export default function HomeContent() {
                 <div className="p-3 bg-luxury-deep rounded-full mb-4 border border-luxury-lightgrey">
                   <Icon className="w-5 h-5 text-gold" />
                 </div>
-                <h3 className="font-playfair text-xs uppercase tracking-wider font-bold text-luxury-black mb-2">{benefit.title}</h3>
-                <p className="text-[11px] text-gray-400 leading-relaxed max-w-xs font-light">{benefit.desc}</p>
+                <h3 className="font-playfair text-xs uppercase tracking-wider font-bold text-luxury-black mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-[11px] text-gray-400 leading-relaxed max-w-xs font-light">
+                  {benefit.desc}
+                </p>
               </motion.div>
             );
           })}
@@ -334,7 +441,9 @@ export default function HomeContent() {
       <section className="py-20 bg-white border-t border-luxury-lightgrey">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center gap-6">
           <motion.div {...fadeInUp} className="flex flex-col items-center">
-            <h2 className="text-2xl sm:text-3xl font-bold font-playfair tracking-wider mb-3 uppercase">Connoisseur Feedback</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold font-playfair tracking-wider mb-3 uppercase">
+              Connoisseur Feedback
+            </h2>
             <div className="w-16 h-0.5 bg-gold mb-8" />
           </motion.div>
 
@@ -346,19 +455,26 @@ export default function HomeContent() {
             className="flex flex-col items-center gap-4"
           >
             <div className="flex gap-1">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-gold fill-current" />)}
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-4 h-4 text-gold fill-current" />
+              ))}
             </div>
             <blockquote className="font-playfair text-xl sm:text-2xl text-gray-700 italic leading-relaxed max-w-2xl font-light">
-              &ldquo;Oud Royale is an absolute masterpiece. I wore it to a wedding and received no less than ten compliments. It lasts all day and leaves a lingering warmth.&rdquo;
+              &ldquo;Oud Royale is an absolute masterpiece. I wore it to a
+              wedding and received no less than ten compliments. It lasts all
+              day and leaves a lingering warmth.&rdquo;
             </blockquote>
             <div>
-              <cite className="not-italic font-bold text-luxury-black uppercase tracking-wider text-[10px] block">Vikramaditya S.</cite>
-              <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Verified Bhatkar &amp; Co. Customer</span>
+              <cite className="not-italic font-bold text-luxury-black uppercase tracking-wider text-[10px] block">
+                Vikramaditya S.
+              </cite>
+              <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                Verified Bhatkar &amp; Co. Customer
+              </span>
             </div>
           </motion.div>
         </div>
       </section>
-
     </div>
   );
 }
