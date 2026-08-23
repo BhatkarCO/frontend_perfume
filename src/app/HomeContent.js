@@ -63,7 +63,7 @@ export default function HomeContent() {
   return (
     <div className="flex flex-col min-h-screen bg-luxury-deep">
       {/* 1. HERO BANNER */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative w-full min-w-0 h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image Overlay */}
         <Image
           src="/hero-bg.webp"
@@ -78,7 +78,7 @@ export default function HomeContent() {
         <div className="absolute inset-0 bg-black/40 backdrop-blur-[2.5px]" />
 
         {/* Hero Content */}
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center gap-6 z-10">
+        <div className="relative w-full max-w-4xl min-w-0 mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center gap-6 z-10 overflow-hidden">
           <motion.span
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -312,7 +312,7 @@ export default function HomeContent() {
       </section>
 
       {/* 4. BRAND STORY */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -40 }}
