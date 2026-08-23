@@ -37,7 +37,7 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="bg-luxury-darkgrey border-t border-luxury-lightgrey pt-16 pb-8 text-gray-600">
+  <footer className="bg-luxury-darkgrey border-t border-luxury-lightgrey pt-16 pb-28 md:pb-8 text-gray-600">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-10">
         
         {/* About & Branding Column */}
