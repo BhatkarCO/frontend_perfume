@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 
 export default function Register() {
-  const { register, isAuthenticated, loading } = useAuth();
+  const { register, loginWithGoogle, isAuthenticated, loading } = useAuth();
   const toast = useToast();
   const router = useRouter();
 
@@ -187,6 +187,14 @@ export default function Register() {
         </form>
 
         <hr className="border-luxury-lightgrey" />
+        <button
+          type="button"
+          onClick={loginWithGoogle}
+          className="w-full py-3.5 rounded-sm border border-luxury-lightgrey bg-white text-luxury-black flex items-center justify-center gap-3 uppercase tracking-widest font-bold text-xs hover:border-gold transition-colors"
+        >
+          <span className="text-base font-bold">G</span>
+          Continue with Google
+        </button>
 
         {/* Footer Link */}
         <p className="text-center text-xs text-gray-500 font-light">

@@ -87,6 +87,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
+  };
+
   /**
    * Logout Action
    */
@@ -226,6 +230,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         register,
         login,
+        loginWithGoogle,
         logout,
         verifyEmailOTP,
         verifyForgotPasswordOTP,

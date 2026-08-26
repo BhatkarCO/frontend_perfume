@@ -3,12 +3,13 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, Chrome,} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 
 function LoginContent() {
-  const { login, logout, isAuthenticated, loading } = useAuth();
+  const { login, loginWithGoogle, logout, isAuthenticated, loading } =
+    useAuth();
   const toast = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -139,6 +140,14 @@ function LoginContent() {
         </form>
 
         <hr className="border-luxury-lightgrey" />
+        <button
+          type="button"
+          onClick={loginWithGoogle}
+          className="w-full py-3.5 rounded-sm border border-luxury-lightgrey bg-white text-luxury-black flex items-center justify-center gap-3 uppercase tracking-widest font-bold text-xs hover:border-gold transition-colors"
+        >
+          <span className="text-base font-bold">G</span>
+          Continue with Google
+        </button>
 
         {/* Footer Link */}
         <p className="text-center text-xs text-gray-500 font-light">
