@@ -88,8 +88,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
-  };
+  window.location.href = "/api/auth/google";
+};
 
   /**
    * Logout Action
