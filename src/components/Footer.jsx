@@ -121,7 +121,7 @@ export const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-luxury-lightgrey mt-12 pt-8 text-center text-[10px] text-gray-400 flex flex-col sm:flex-row justify-between items-center gap-4">
         <p>&copy; {new Date().getFullYear()} Bhatkar & Co. Perfumes. All rights reserved.</p>
         <p className="flex items-center gap-2">
-          Designed & Developed By Bee Creativess.
+          Designed & Developed By BeeCreativess.
         </p>
       </div>
     </footer>
