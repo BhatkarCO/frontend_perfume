@@ -56,23 +56,29 @@ export default function Checkout() {
   const [orderCompleted, setOrderCompleted] = useState(false);
 
   const displayShipping = Number(
-    pricing?.delivery_charges ?? pricing?.shipping_charge ?? shippingFee ?? 0,
+    pricing?.delivery_charge ??
+      pricing?.delivery_charges ??
+      pricing?.shipping_charge ??
+      shippingFee ??
+      0,
   );
+
   const displayTax = Number(
-    pricing?.gst ?? pricing?.tax ?? pricing?.taxes ?? 0,
+    pricing?.gst_amount ?? pricing?.gst ?? pricing?.tax ?? pricing?.taxes ?? 0,
   );
+
+  const displaySubtotal = Number(subtotal - discountAmount + displayTax);
+
   const displayTotal = Number(
-    pricing?.payable ??
-      subtotal - discountAmount + displayShipping + displayTax,
+    pricing?.payable ?? displaySubtotal + displayShipping,
   );
+
   const summaryShipping = previewLoading
     ? "Calculating..."
     : displayShipping > 0
       ? `₹${displayShipping.toFixed(2)}`
       : "FREE";
-  const summaryTax = previewLoading
-    ? "Calculating..."
-    : `₹${displayTax.toFixed(2)}`;
+
   const summaryTotal = previewLoading
     ? "Calculating..."
     : `₹${displayTotal.toFixed(2)}`;
@@ -251,7 +257,7 @@ export default function Checkout() {
         }, 1500);
       } else {
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_change_key",
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           amount: amount * 100,
           currency,
           name: "BHATKAR & CO. PERFUMES",
@@ -504,11 +510,15 @@ export default function Checkout() {
                 </div>
               ))}
               <hr className="border-luxury-lightgrey my-1" />
-              <div className="flex justify-between">
+              <div className="flex justify-between items-start">
                 <span>Subtotal</span>
-                <span className="text-luxury-black font-semibold">
-                  ₹{subtotal.toFixed(0)}
-                </span>
+
+                <div className="text-right">
+                  <span className="text-luxury-black font-semibold">
+                    ₹{displaySubtotal.toFixed(2)}
+                  </span>
+                  <p className="text-[10px] text-gray-500 mt-1">GST included</p>
+                </div>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-600">
@@ -524,14 +534,6 @@ export default function Checkout() {
                     : displayShipping > 0
                       ? `₹${displayShipping.toFixed(2)}`
                       : "FREE"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>GST / Tax</span>
-                <span className="text-luxury-black font-semibold">
-                  {previewLoading
-                    ? "Calculating..."
-                    : `₹${displayTax.toFixed(2)}`}
                 </span>
               </div>
               <hr className="border-luxury-lightgrey my-1" />
@@ -643,25 +645,39 @@ export default function Checkout() {
             </h3>
 
             <div className="flex flex-col gap-3 text-xs text-gray-500">
-              <div className="flex justify-between">
+              {/* Subtotal + GST included */}
+              <div className="flex justify-between items-start">
                 <span>Subtotal</span>
-                <span>₹{subtotal.toFixed(0)}</span>
+
+                <div className="text-right">
+                  <span className="text-luxury-black font-semibold">
+                    ₹{displaySubtotal.toFixed(2)}
+                  </span>
+
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    GST included
+                  </p>
+                </div>
               </div>
+
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Discount</span>
-                  <span>- ₹{discountAmount.toFixed(0)}</span>
+                  <span>- ₹{discountAmount.toFixed(2)}</span>
                 </div>
               )}
+
+              {/* Shipping */}
               <div className="flex justify-between">
                 <span>Shipping charge</span>
-                <span>{summaryShipping}</span>
+                <span className="text-luxury-black font-semibold">
+                  {summaryShipping}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span>GST / Tax</span>
-                <span>{summaryTax}</span>
-              </div>
+
               <hr className="border-luxury-lightgrey my-1" />
+
+              {/* Total */}
               <div className="flex justify-between font-bold text-xs uppercase tracking-wider text-luxury-black">
                 <span>Total Amount</span>
                 <span>{summaryTotal}</span>

@@ -2,7 +2,6 @@ import { Inter, Cormorant_Garamond, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import LayoutWrapper from "@/components/LayoutWrapper";
-import Script from "next/script";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -87,12 +86,6 @@ export default function RootLayout({ children }) {
         <Providers>
           <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>
-
-        {/* Razorpay Web Checkout SDK */}
-        <Script
-          src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="lazyOnload"
-        />
       </body>
     </html>
   );

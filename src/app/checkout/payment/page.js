@@ -8,6 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import api from "@/utils/api";
+import Script from "next/script";
 
 function PaymentContent() {
   const router = useRouter();
@@ -44,39 +45,34 @@ function PaymentContent() {
 
   const [paymentMethod, setPaymentMethod] = useState("RAZORPAY");
 
+  const COD_CHARGE = 65;
+
   const [processing, setProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
   const finalTotal = subtotal - discountAmount + shippingCharge;
+
   const displayShipping = Number(
     pricingDetails?.delivery_charges ??
       pricingDetails?.shipping_charge ??
       shippingCharge,
   );
 
-  // Calculate tax: try to get from backend, or derive it from payable
-  const derivedTax = pricingDetails?.payable
-    ? Number(pricingDetails.payable) -
-      (subtotal - discountAmount + displayShipping)
-    : 0;
-
   const taxAmount = Number(
-    pricingDetails?.gst ??
-      pricingDetails?.tax ??
-      pricingDetails?.taxes ??
-      (derivedTax > 0 ? derivedTax : 0),
+    pricingDetails?.gst ?? pricingDetails?.tax ?? pricingDetails?.taxes ?? 0,
   );
+  const codCharge = paymentMethod === "COD" ? COD_CHARGE : 0;
 
-  const displayTotal = Number(
-    pricingDetails?.payable > 0
-      ? pricingDetails.payable
-      : subtotal - discountAmount + displayShipping + taxAmount,
-  );
+  const displaySubtotal = subtotal - discountAmount + taxAmount;
+
+  const displayTotal = displaySubtotal + displayShipping + codCharge;
+
   const summaryShipping = loadingShipping
     ? "Calculating..."
     : displayShipping > 0
       ? `₹${displayShipping.toFixed(2)}`
       : "FREE";
+
   const summaryTotal =
     loadingShipping || previewLoading
       ? "Calculating..."
@@ -400,8 +396,9 @@ function PaymentContent() {
         return;
       }
 
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_change_key",
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
 
         amount: amount * 100,
 
@@ -550,9 +547,13 @@ function PaymentContent() {
           </h3>
 
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-start">
               <span>Subtotal</span>
-              <span>₹{subtotal.toFixed(0)}</span>
+
+              <div className="text-right">
+                <span>₹{displaySubtotal.toFixed(2)}</span>
+                <p className="text-xs text-gray-500 mt-1">GST included</p>
+              </div>
             </div>
 
             {discountAmount > 0 && (
@@ -562,15 +563,17 @@ function PaymentContent() {
               </div>
             )}
 
-            <div className="flex justify-between text-gray-700">
-              <span>GST / Tax</span>
-              <span>₹{taxAmount.toFixed(2)}</span>
-            </div>
-
             <div className="flex justify-between">
               <span>Shipping charge</span>
               <span>{summaryShipping}</span>
             </div>
+
+            {paymentMethod === "COD" && (
+              <div className="flex justify-between">
+                <span>COD Charges</span>
+                <span>₹65.00</span>
+              </div>
+            )}
 
             <hr />
 
@@ -606,14 +609,21 @@ function PaymentContent() {
 }
 export default function PaymentPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex justify-center items-center min-h-[70vh]">
-          Loading payment...
-        </div>
-      }
-    >
-      <PaymentContent />
-    </Suspense>
+    <>
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+      />
+
+      <Suspense
+        fallback={
+          <div className="flex justify-center items-center min-h-[70vh]">
+            Loading payment...
+          </div>
+        }
+      >
+        <PaymentContent />
+      </Suspense>
+    </>
   );
 }
