@@ -758,7 +758,8 @@ function DashboardContent() {
                         .map((ord) => (
                           <div
                             key={ord.id}
-                            className="p-4 bg-white border border-luxury-lightgrey rounded-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-gold/45 transition-all shadow-sm"
+                            onClick={() => handleViewOrder(ord.id)}
+                            className="p-4 bg-white border border-luxury-lightgrey rounded-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-gold/45 transition-all shadow-sm cursor-pointer"
                           >
                             <div>
                               <div className="flex items-center gap-2">
@@ -796,14 +797,10 @@ function DashboardContent() {
                               </span>
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => handleViewOrder(ord.id)}
-                                  className="border border-luxury-black hover:bg-luxury-deep text-luxury-black text-[10px] px-3 py-1.5 rounded-sm uppercase tracking-widest font-bold"
-                                  type="button"
-                                >
-                                  Track
-                                </button>
-                                <button
-                                  onClick={() => handleDownloadInvoice(ord.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDownloadInvoice(ord.id);
+                                  }}
                                   className="bg-luxury-deep border border-luxury-lightgrey text-gray-400 hover:text-gold p-2 rounded-sm"
                                   title="Download Invoice"
                                   type="button"
@@ -844,6 +841,14 @@ function DashboardContent() {
                         <p className="mt-1">
                           <strong>Payment ID:</strong>{" "}
                           {activeOrder.razorpay_payment_id || "N/A"}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Payment Mode:
+                          <span className="text-luxury-black font-semibold ml-1">
+                            {activeOrder.payment_method === "COD"
+                              ? "COD"
+                              : "Online (Razorpay)"}
+                          </span>
                         </p>
                       </div>
                       <div className="text-right">

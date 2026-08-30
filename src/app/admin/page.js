@@ -16,6 +16,7 @@ import {
   Pencil,
   MoreVertical,
   Menu,
+  Truck,
 } from "lucide-react";
 
 function AdminContent() {
@@ -56,7 +57,10 @@ function AdminContent() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [activeOrder, setActiveOrder] = useState(null);
+  const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
   const [users, setUsers] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Add Product Form State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -270,18 +274,6 @@ function AdminContent() {
       0,
     ) || 0;
 
-  const handleUpdateOrderStatus = async (orderId, newStatus) => {
-    try {
-      await api.put(`/admin/orders/${orderId}/status`, { status: newStatus });
-      toast.success("Order status updated.");
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
-      );
-    } catch (err) {
-      toast.error("Failed to update status.");
-    }
-  };
-
   const handleToggleBlock = async (userId, currentRole) => {
     const shouldBlock = currentRole !== "blocked";
     try {
@@ -483,6 +475,24 @@ function AdminContent() {
     } catch (err) {
       console.error("Error downloading invoice:", err);
       toast.error("Failed to download invoice.");
+    }
+  };
+
+  const handleViewAdminOrder = async (orderId) => {
+    try {
+      setOrderDetailsLoading(true);
+
+      const res = await api.get(`/admin/orders/${orderId}`);
+
+      setActiveOrder(res.data);
+    } catch (err) {
+      console.error("Error fetching admin order details:", err);
+
+      toast.error(
+        err.response?.data?.message || "Failed to load order details.",
+      );
+    } finally {
+      setOrderDetailsLoading(false);
     }
   };
 
@@ -1031,70 +1041,322 @@ function AdminContent() {
               )}
 
               {activeTab === "orders" && (
-                <div className="flex flex-col gap-4">
-                  <input
-                    type="text"
-                    value={orderSearchQuery}
-                    onChange={(e) => setOrderSearchQuery(e.target.value)}
-                    placeholder="Search by order ID"
-                    className="w-full max-w-xs bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 py-2 rounded-sm focus:outline-none focus:border-gold"
-                  />
-                  {filteredOrders.length === 0 ? (
-                    <p className="text-sm text-gray-500">No orders found.</p>
-                  ) : (
-                    <div className="grid gap-3">
-                      {filteredOrders.map((ord) => (
-                        <div
-                          key={ord.id}
-                          className="border border-luxury-lightgrey rounded-sm p-3"
-                        >
-                          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-luxury-black text-xs sm:text-sm break-all">
-                                #{ord.id}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {ord.customer_name}
-                              </p>
-                            </div>
-                            <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-luxury-lightgrey">
-                              <p className="font-bold text-luxury-black text-sm">
-                                ₹{parseFloat(ord.total_amount || 0).toFixed(0)}
-                              </p>
-                              <div className="flex items-center gap-2">
-                                <select
-                                  value={ord.status || "Pending"}
-                                  onChange={(e) =>
-                                    handleUpdateOrderStatus(
-                                      ord.id,
-                                      e.target.value,
-                                    )
-                                  }
-                                  className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-2 py-1.5 rounded bg-white focus:outline-none focus:border-gold"
-                                >
-                                  <option value="Pending">Pending</option>
-                                  <option value="Confirmed">Confirmed</option>
-                                  <option value="Processing">Processing</option>
-                                  <option value="Shipped">Shipped</option>
-                                  <option value="Delivered">Delivered</option>
-                                  <option value="Cancelled">Cancelled</option>
-                                </select>
-                                <button
-                                  onClick={() => handleDownloadInvoice(ord.id)}
-                                  className="p-2 border border-gold/30 hover:border-gold text-gold hover:bg-gold/5 rounded transition-all duration-300 flex items-center justify-center focus:outline-none"
-                                  title="Download Invoice"
-                                  type="button"
-                                >
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
+                <>
+                  {!activeOrder ? (
+                    <div className="flex flex-col gap-4">
+                      <input
+                        type="text"
+                        value={orderSearchQuery}
+                        onChange={(e) => setOrderSearchQuery(e.target.value)}
+                        placeholder="Search by order ID"
+                        className="w-full max-w-xs bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 py-2 rounded-sm focus:outline-none focus:border-gold"
+                      />
+                      {filteredOrders.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                          No orders found.
+                        </p>
+                      ) : (
+                        <div className="grid gap-3">
+                          {filteredOrders.map((ord) => (
+                            <div
+                              key={ord.id}
+                              onClick={() => handleViewAdminOrder(ord.id)}
+                              className="border border-luxury-lightgrey rounded-sm p-3 cursor-pointer hover:border-gold/50 transition-all"
+                            >
+                              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-luxury-black text-xs sm:text-sm break-all">
+                                    #{ord.id}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {ord.customer_name}
+                                  </p>
+                                </div>
+                                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-luxury-lightgrey">
+                                  <p className="font-bold text-luxury-black text-sm">
+                                    ₹
+                                    {parseFloat(ord.total_amount || 0).toFixed(
+                                      0,
+                                    )}
+                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-sm border ${
+                                        ord.status === "Confirmed"
+                                          ? "text-green-500 border-green-500/30 bg-green-500/5"
+                                          : ord.status === "Processing"
+                                            ? "text-blue-500 border-blue-500/30 bg-blue-500/5"
+                                            : ord.status === "Shipped"
+                                              ? "text-purple-500 border-purple-500/30 bg-purple-500/5"
+                                              : ord.status === "Delivered"
+                                                ? "text-green-600 border-green-600/30 bg-green-600/5"
+                                                : ord.status === "Cancelled"
+                                                  ? "text-red-500 border-red-500/30 bg-red-500/5"
+                                                  : "text-gold border-gold/30 bg-gold/5"
+                                      }`}
+                                    >
+                                      {ord.status || "Pending"}
+                                    </span>
+                                    <button
+                                      onClick={() =>
+                                        handleDownloadInvoice(ord.id)
+                                      }
+                                      className="p-2 border border-gold/30 hover:border-gold text-gold hover:bg-gold/5 rounded transition-all duration-300 flex items-center justify-center focus:outline-none"
+                                      title="Download Invoice"
+                                      type="button"
+                                    >
+                                      <FileDown className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-6">
+                      {/* Back */}
+                      <button
+                        type="button"
+                        onClick={() => setActiveOrder(null)}
+                        className="text-gold text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 w-fit"
+                      >
+                        ← Back to List
+                      </button>
+
+                      {/* Header */}
+                      <div className="border-b border-luxury-lightgrey pb-5">
+                        <div className="flex flex-col sm:flex-row justify-between gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500">
+                              Order ID:
+                              <span className="text-luxury-black font-semibold">
+                                {" "}
+                                #{activeOrder.id}
+                              </span>
+                            </p>
+
+                            <p className="text-xs text-gray-500 mt-1">
+                              Customer:
+                              <span className="text-luxury-black font-semibold">
+                                {" "}
+                                {activeOrder.customer_name}
+                              </span>
+                            </p>
+
+                            <p className="text-xs text-gray-500 mt-1">
+                              Payment ID:
+                              <span className="text-luxury-black">
+                                {" "}
+                                {activeOrder.razorpay_payment_id || "N/A"}
+                              </span>
+                            </p>
+
+                            <p className="text-xs text-gray-500 mt-1">
+                              Payment Mode:
+                              <span className="text-luxury-black font-semibold ml-1">
+                                {activeOrder.payment_method === "COD"
+                                  ? "COD"
+                                  : "Online (Razorpay)"}
+                              </span>
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">
+                              Grand Total:
+                            </p>
+
+                            <p className="text-lg font-bold text-luxury-black">
+                              ₹
+                              {parseFloat(
+                                activeOrder.total_amount || 0,
+                              ).toFixed(2)}
+                            </p>
+
+                            <p className="text-xs text-gray-500 mt-1">
+                              Status:
+                              <span className="text-gold font-bold ml-1">
+                                {activeOrder.shiprocket_status ||
+                                  activeOrder.status}
+                              </span>
+                            </p>
                           </div>
                         </div>
-                      ))}
+                      </div>
+
+                      {/* Delivery Progress */}
+                      {activeOrder.status !== "Cancelled" && (
+                        <div className="py-4">
+                          <h4 className="text-[10px] uppercase tracking-widest text-luxury-black font-bold mb-6">
+                            Delivery Progress
+                          </h4>
+
+                          <div className="grid grid-cols-6 gap-2">
+                            {[
+                              ["Created", "Created"],
+                              ["AWB_ASSIGNED", "AWB Assigned"],
+                              ["PICKUP_SCHEDULED", "Pickup Scheduled"],
+                              ["PICKED_UP", "Picked Up"],
+                              ["IN_TRANSIT", "In Transit"],
+                              ["OUT_FOR_DELIVERY", "Out for Delivery"],
+                            ].map(([value, label]) => (
+                              <div key={value} className="text-center">
+                                <div className="w-8 h-8 mx-auto rounded-full border border-gold flex items-center justify-center">
+                                  <Truck className="w-4 h-4 text-gold" />
+                                </div>
+
+                                <p className="text-[9px] text-gray-500 mt-2">
+                                  {label}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Order Items */}
+                      <div className="border-t border-luxury-lightgrey pt-5">
+                        <h4 className="text-[10px] uppercase tracking-widest text-gold font-bold mb-4">
+                          Order Items
+                        </h4>
+
+                        <div className="flex flex-col gap-3">
+                          {activeOrder.items?.map((item) => (
+                            <div
+                              key={item.product_id}
+                              className="flex items-center justify-between border-b border-luxury-lightgrey pb-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                {item.primary_image && (
+                                  <img
+                                    src={item.primary_image}
+                                    alt={item.name}
+                                    className="w-12 h-12 object-cover"
+                                  />
+                                )}
+
+                                <div>
+                                  <p className="text-xs font-semibold text-luxury-black">
+                                    {item.name}
+                                  </p>
+
+                                  <p className="text-[9px] text-gray-500">
+                                    Qty: {item.quantity} • ₹
+                                    {parseFloat(
+                                      item.price_at_purchase || 0,
+                                    ).toFixed(2)}{" "}
+                                    each
+                                  </p>
+                                </div>
+                              </div>
+
+                              <p className="text-xs font-bold text-luxury-black">
+                                ₹
+                                {(
+                                  item.price_at_purchase * item.quantity
+                                ).toFixed(2)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Shipment Details */}
+                      <div className="border-t border-luxury-lightgrey pt-5">
+                        <h4 className="text-[10px] uppercase tracking-widest text-gold font-bold mb-4">
+                          Shipment Details
+                        </h4>
+
+                        <div className="flex flex-col gap-1 text-xs">
+                          <p>
+                            <strong>AWB:</strong>{" "}
+                            {activeOrder.shiprocket_awb || "N/A"}
+                          </p>
+
+                          <p>
+                            <strong>Courier:</strong>{" "}
+                            {activeOrder.shiprocket_courier_name || "N/A"}
+                          </p>
+
+                          <p>
+                            <strong>Status:</strong>{" "}
+                            {activeOrder.shiprocket_status || "N/A"}
+                          </p>
+
+                          <p>
+                            <strong>Shiprocket Order ID:</strong>{" "}
+                            {activeOrder.shiprocket_order_id || "N/A"}
+                          </p>
+
+                          <p>
+                            <strong>Shipment ID:</strong>{" "}
+                            {activeOrder.shiprocket_shipment_id || "N/A"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Customer */}
+                      <div className="border-t border-luxury-lightgrey pt-5">
+                        <h4 className="text-[10px] uppercase tracking-widest text-gold font-bold mb-4">
+                          Customer Details
+                        </h4>
+
+                        <div className="text-xs flex flex-col gap-1">
+                          <p>
+                            <strong>Name:</strong> {activeOrder.customer_name}
+                          </p>
+
+                          <p>
+                            <strong>Email:</strong> {activeOrder.customer_email}
+                          </p>
+
+                          <p>
+                            <strong>Phone:</strong>{" "}
+                            {activeOrder.customer_phone ||
+                              activeOrder.shipping_phone ||
+                              "N/A"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Shipping Destination */}
+                      <div className="border-t border-luxury-lightgrey pt-5">
+                        <h4 className="text-[10px] uppercase tracking-widest text-gold font-bold mb-4">
+                          Shipping Destination
+                        </h4>
+
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                          {activeOrder.address_line1}
+                          {activeOrder.address_line2 &&
+                            `, ${activeOrder.address_line2}`}
+                          {activeOrder.city && `, ${activeOrder.city}`}
+                          {activeOrder.state && `, ${activeOrder.state}`}
+                          {activeOrder.postal_code &&
+                            ` - ${activeOrder.postal_code}`}
+                        </p>
+
+                        <p className="text-xs text-gray-500 mt-1">
+                          Contact Phone: {activeOrder.shipping_phone || "N/A"}
+                        </p>
+                      </div>
+
+                      {/* Invoice */}
+                      <div className="flex justify-end pt-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadInvoice(activeOrder.id)}
+                          className="border border-gold/40 text-gold hover:bg-gold/5 px-4 py-2 text-[10px] uppercase tracking-widest font-bold flex items-center gap-2"
+                        >
+                          <FileDown className="w-3.5 h-3.5" />
+                          Invoice
+                        </button>
+                      </div>
                     </div>
                   )}
-                </div>
+                </>
               )}
 
               {activeTab === "users" && (

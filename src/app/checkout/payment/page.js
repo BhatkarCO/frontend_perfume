@@ -217,7 +217,9 @@ function PaymentContent() {
         );
 
         const payableAmount = Number(
-          pricing?.payable ?? subtotal - discountAmount + deliveryCharges,
+          (
+            pricing?.payable ?? subtotal - discountAmount + deliveryCharges
+          ).toFixed(2),
         );
 
         setShippingCharge(deliveryCharges);
@@ -310,7 +312,9 @@ function PaymentContent() {
           0,
       );
       const payableAmount = Number(
-        pricing?.payable ?? subtotal - discountAmount + deliveryCharges,
+        (
+          pricing?.payable ?? subtotal - discountAmount + deliveryCharges
+        ).toFixed(2),
       );
 
       setShippingCharge(deliveryCharges);
@@ -374,9 +378,11 @@ function PaymentContent() {
           0,
       );
       const payableAmount = Number(
-        pricing?.payable ??
+        (
+          pricing?.payable ??
           amount ??
-          subtotal - discountAmount + deliveryCharges,
+          subtotal - discountAmount + deliveryCharges
+        ).toFixed(2),
       );
 
       setShippingCharge(deliveryCharges);
@@ -400,7 +406,7 @@ function PaymentContent() {
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
 
-        amount: amount * 100,
+        amount: Math.round(Number(amount) * 100),
 
         currency,
 
