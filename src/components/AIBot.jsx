@@ -7,6 +7,19 @@ import Image from "next/image";
 import { Send, X, Sparkles, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const [sessionId] = useState(() => {
+  if (typeof window === "undefined") return null;
+
+  let id = localStorage.getItem("fragrance_chat_session");
+
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("fragrance_chat_session", id);
+  }
+
+  return id;
+});
+
 export const AIBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -45,7 +58,7 @@ export const AIBot = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          session_id: "guest-user",
+          session_id: sessionId,
           message: text,
         }),
       });
