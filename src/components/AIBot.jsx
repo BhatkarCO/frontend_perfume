@@ -7,19 +7,6 @@ import Image from "next/image";
 import { Send, X, Sparkles, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const [sessionId] = useState(() => {
-  if (typeof window === "undefined") return null;
-
-  let id = localStorage.getItem("fragrance_chat_session");
-
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem("fragrance_chat_session", id);
-  }
-
-  return id;
-});
-
 export const AIBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -32,6 +19,22 @@ export const AIBot = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
+
+  const [sessionId, setSessionId] = useState("guest-user");
+
+  useEffect(() => {
+    let storedSessionId = localStorage.getItem("fragrance_chat_session");
+
+    if (!storedSessionId) {
+      storedSessionId = `guest-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 10)}`;
+
+      localStorage.setItem("fragrance_chat_session", storedSessionId);
+    }
+
+    setSessionId(storedSessionId);
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,16 +55,19 @@ export const AIBot = () => {
     setIsTyping(true);
 
     try {
-      const response = await fetch("https://backend-perfume-10k4.onrender.com/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "https://backend-perfume-10k4.onrender.com/api/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            message: text,
+          }),
         },
-        body: JSON.stringify({
-          session_id: sessionId,
-          message: text,
-        }),
-      });
+      );
 
       const data = await response.json();
 
