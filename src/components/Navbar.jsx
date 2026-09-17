@@ -60,7 +60,7 @@ export const Navbar = () => {
       {showAnnouncement && (
         <div className="relative bg-luxury-black text-white text-[9px] sm:text-[10px] py-2 uppercase font-semibold tracking-[0.25em]">
           <p className="text-center">
-            Free shipping on orders above ₹1500 • Handcrafted in India
+            FREE SHIPPING ON ORDERS OF 2 OR MORE ITEMS • HANDCRAFTED IN INDIA
           </p>
 
           <button
