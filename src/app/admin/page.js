@@ -626,6 +626,24 @@ function AdminContent() {
   const filteredOrders = orders.filter((ord) =>
     ord.id.toString().includes(orderSearchQuery.trim()),
   );
+  const getOrderStatusLabel = (order) => {
+    const status = order.shiprocket_status || order.status;
+
+    const statusLabels = {
+      AWB_ASSIGNED: "AWB Assigned",
+      PICKUP_SCHEDULED: "Pickup Scheduled",
+      PICKED_UP: "Picked Up",
+      IN_TRANSIT: "In Transit",
+      OUT_FOR_DELIVERY: "Out for Delivery",
+      DELIVERED: "Delivered",
+      CANCELLED: "Cancelled",
+      RTO: "RTO",
+      RTO_DELIVERED: "RTO Delivered",
+      LOST: "Lost",
+    };
+
+    return statusLabels[status] || status || "Pending";
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-[85vh] bg-luxury-deep text-luxury-black">
@@ -1082,20 +1100,20 @@ function AdminContent() {
                                   <div className="flex items-center gap-2">
                                     <span
                                       className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-sm border ${
-                                        ord.status === "Confirmed"
-                                          ? "text-green-500 border-green-500/30 bg-green-500/5"
-                                          : ord.status === "Processing"
-                                            ? "text-blue-500 border-blue-500/30 bg-blue-500/5"
-                                            : ord.status === "Shipped"
+                                        status === "DELIVERED"
+                                          ? "text-green-600 border-green-600/30 bg-green-600/5"
+                                          : status === "CANCELLED"
+                                            ? "text-red-500 border-red-500/30 bg-red-500/5"
+                                            : status === "IN_TRANSIT" ||
+                                                status === "OUT_FOR_DELIVERY"
                                               ? "text-purple-500 border-purple-500/30 bg-purple-500/5"
-                                              : ord.status === "Delivered"
-                                                ? "text-green-600 border-green-600/30 bg-green-600/5"
-                                                : ord.status === "Cancelled"
-                                                  ? "text-red-500 border-red-500/30 bg-red-500/5"
-                                                  : "text-gold border-gold/30 bg-gold/5"
+                                              : status === "PICKED_UP" ||
+                                                  status === "PICKUP_SCHEDULED"
+                                                ? "text-blue-500 border-blue-500/30 bg-blue-500/5"
+                                                : "text-gold border-gold/30 bg-gold/5"
                                       }`}
                                     >
-                                      {ord.status || "Pending"}
+                                      {getOrderStatusLabel(ord)}
                                     </span>
                                     <button
                                       onClick={() =>
