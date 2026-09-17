@@ -36,11 +36,15 @@ export const CartDrawer = () => {
 
   const isOpen = cartOpen;
   const onClose = () => setCartOpen(false);
-
+  const totalQuantity = cartItems.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
+    0,
+  );
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
   const [activeTab, setActiveTab] = useState("cart"); // 'cart' or 'saved'
+  const [showFreeShippingPopup, setShowFreeShippingPopup] = useState(false);
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
@@ -59,6 +63,11 @@ export const CartDrawer = () => {
   };
 
   const handleCheckout = () => {
+    if (totalQuantity === 1) {
+      setShowFreeShippingPopup(true);
+      return;
+    }
+
     onClose();
     router.push("/checkout");
   };
@@ -299,6 +308,57 @@ export const CartDrawer = () => {
                 })
               )}
             </div>
+
+            {showFreeShippingPopup && (
+              <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/30 p-6">
+                <div className="w-full max-w-sm bg-white border border-luxury-lightgrey rounded-sm shadow-xl p-6">
+                  <div className="text-center">
+                    <h4 className="font-playfair text-lg font-bold text-luxury-black">
+                      Get Free Shipping
+                    </h4>
+
+                    <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                      Add one more item to your bag and unlock FREE shipping on
+                      your order.
+                    </p>
+
+                    <div className="flex flex-col gap-2 mt-5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowFreeShippingPopup(false);
+                          onClose();
+                          router.push("/catalog");
+                        }}
+                        className="btn-gold w-full py-3 rounded uppercase tracking-widest font-bold text-[10px]"
+                      >
+                        Add Another Item
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowFreeShippingPopup(false);
+                          onClose();
+                          router.push("/checkout");
+                        }}
+                        className="w-full py-3 rounded border border-luxury-lightgrey text-gray-600 hover:text-luxury-black hover:border-gray-400 uppercase tracking-widest font-bold text-[10px]"
+                      >
+                        Continue to Checkout
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowFreeShippingPopup(false)}
+                        className="text-[10px] text-gray-400 hover:text-luxury-black uppercase tracking-wider mt-1"
+                      >
+                        Stay in Bag
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Footer Summary */}
             {activeTab === "cart" && cartItems.length > 0 && (
