@@ -24,6 +24,7 @@ export default function Checkout() {
     cartItems,
     coupon,
     subtotal,
+    productDiscount,
     discountAmount,
     shippingFee,
     grandTotal,
@@ -63,14 +64,17 @@ export default function Checkout() {
       0,
   );
 
-  const displayTax = Number(
-    pricing?.gst_amount ?? pricing?.gst ?? pricing?.tax ?? pricing?.taxes ?? 0,
+  const displaySubtotal = Number(pricing?.subtotal ?? subtotal ?? 0);
+
+  const displayProductDiscount = Number(pricing?.product_discount ?? 0);
+
+  const displayCouponDiscount = Number(
+    pricing?.coupon_discount ?? discountAmount ?? 0,
   );
 
-  const displaySubtotal = Number(subtotal - discountAmount + displayTax);
-
   const displayTotal = Number(
-    pricing?.payable ?? displaySubtotal + displayShipping,
+    pricing?.payable ??
+      displaySubtotal - displayCouponDiscount + displayShipping,
   );
 
   const summaryShipping = previewLoading
@@ -160,7 +164,7 @@ export default function Checkout() {
         console.error("Error response:", err.response?.data);
         setPreviewError(
           err.response?.data?.message ||
-            "Unable to calculate shipping and tax preview.",
+            "Unable to calculate shipping and order preview.",
         );
       } finally {
         setPreviewLoading(false);
@@ -503,9 +507,11 @@ export default function Checkout() {
                   </span>
                   <span className="text-luxury-black font-semibold">
                     ₹
-                    {((item.sale_price || item.price) * item.quantity).toFixed(
-                      0,
-                    )}
+                    {(
+                      (item.sale_price
+                        ? Number(item.sale_price)
+                        : Number(item.price)) * item.quantity
+                    ).toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -517,13 +523,19 @@ export default function Checkout() {
                   <span className="text-luxury-black font-semibold">
                     ₹{displaySubtotal.toFixed(2)}
                   </span>
-                  <p className="text-[10px] text-gray-500 mt-1">GST included</p>
                 </div>
               </div>
-              {discountAmount > 0 && (
+              {displayProductDiscount > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Discount</span>
-                  <span>- ₹{discountAmount.toFixed(0)}</span>
+                  <span>Discount on MRP</span>
+                  <span>- ₹{displayProductDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {coupon && displayCouponDiscount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Coupon</span>
+                  <span>- ₹{displayCouponDiscount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between">
@@ -601,8 +613,8 @@ export default function Checkout() {
               </h3>
               {cartItems.map((item) => {
                 const activePrice = item.sale_price
-                  ? parseFloat(item.sale_price)
-                  : parseFloat(item.price);
+                  ? Number(item.sale_price)
+                  : Number(item.price);
                 return (
                   <div
                     key={item.id}
@@ -630,7 +642,7 @@ export default function Checkout() {
                       </p>
                     </div>
                     <span className="text-xs font-bold text-luxury-black">
-                      ₹{(activePrice * item.quantity).toFixed(0)}
+                      ₹{(activePrice * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 );
@@ -653,17 +665,20 @@ export default function Checkout() {
                   <span className="text-luxury-black font-semibold">
                     ₹{displaySubtotal.toFixed(2)}
                   </span>
-
-                  <p className="text-[10px] text-gray-400 mt-0.5">
-                    GST included
-                  </p>
                 </div>
               </div>
 
-              {discountAmount > 0 && (
+              {displayProductDiscount > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Discount</span>
-                  <span>- ₹{discountAmount.toFixed(2)}</span>
+                  <span>Discount on MRP</span>
+                  <span>- ₹{displayProductDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {coupon && displayCouponDiscount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Coupon</span>
+                  <span>- ₹{displayCouponDiscount.toFixed(2)}</span>
                 </div>
               )}
 

@@ -24,6 +24,7 @@ function PaymentContent() {
     cartItems,
     coupon,
     subtotal,
+    productDiscount,
     discountAmount,
     shippingFee,
     grandTotal,
@@ -50,22 +51,33 @@ function PaymentContent() {
   const [processing, setProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
-  const finalTotal = subtotal - discountAmount + shippingCharge;
-
   const displayShipping = Number(
     pricingDetails?.delivery_charges ??
       pricingDetails?.shipping_charge ??
-      shippingCharge,
+      shippingCharge ??
+      0,
   );
 
-  const taxAmount = Number(
-    pricingDetails?.gst ?? pricingDetails?.tax ?? pricingDetails?.taxes ?? 0,
+  const displaySubtotal = Number(pricingDetails?.subtotal ?? subtotal ?? 0);
+
+  const displayProductDiscount = Number(
+    pricingDetails?.product_discount ?? productDiscount ?? 0,
   );
+
+  const displayCouponDiscount = Number(
+    pricingDetails?.coupon_discount ?? discountAmount ?? 0,
+  );
+
   const codCharge = paymentMethod === "COD" ? COD_CHARGE : 0;
 
-  const displaySubtotal = subtotal - discountAmount + taxAmount;
-
-  const displayTotal = displaySubtotal + displayShipping + codCharge;
+  const displayTotal = Number(
+    (
+      displaySubtotal -
+      displayCouponDiscount +
+      displayShipping +
+      codCharge
+    ).toFixed(2),
+  );
 
   const summaryShipping = loadingShipping
     ? "Calculating..."
@@ -218,7 +230,11 @@ function PaymentContent() {
 
         const payableAmount = Number(
           (
-            pricing?.payable ?? subtotal - discountAmount + deliveryCharges
+            pricing?.payable ??
+            subtotal -
+              discountAmount +
+              deliveryCharges +
+              (paymentMethod === "COD" ? COD_CHARGE : 0)
           ).toFixed(2),
         );
 
@@ -313,7 +329,11 @@ function PaymentContent() {
       );
       const payableAmount = Number(
         (
-          pricing?.payable ?? subtotal - discountAmount + deliveryCharges
+          pricing?.payable ??
+          subtotal -
+            discountAmount +
+            deliveryCharges +
+            (paymentMethod === "COD" ? COD_CHARGE : 0)
         ).toFixed(2),
       );
 
@@ -558,14 +578,20 @@ function PaymentContent() {
 
               <div className="text-right">
                 <span>₹{displaySubtotal.toFixed(2)}</span>
-                <p className="text-xs text-gray-500 mt-1">GST included</p>
               </div>
             </div>
 
-            {discountAmount > 0 && (
+            {displayProductDiscount > 0 && (
               <div className="flex justify-between text-green-600">
-                <span>Promo discount</span>
-                <span>- ₹{discountAmount.toFixed(0)}</span>
+                <span>Discount on MRP</span>
+                <span>- ₹{displayProductDiscount.toFixed(2)}</span>
+              </div>
+            )}
+
+            {coupon && displayCouponDiscount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Coupon</span>
+                <span>- ₹{displayCouponDiscount.toFixed(2)}</span>
               </div>
             )}
 

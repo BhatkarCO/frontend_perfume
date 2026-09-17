@@ -59,9 +59,19 @@ export const CartProvider = ({ children }) => {
   // Recalculate Totals & Shipping
   const subtotal = cartItems.reduce((sum, item) => {
     const price = item.sale_price
-      ? parseFloat(item.sale_price)
-      : parseFloat(item.price);
+      ? Number(item.sale_price)
+      : Number(item.price);
+
     return sum + price * item.quantity;
+  }, 0);
+
+  const productDiscount = cartItems.reduce((sum, item) => {
+    if (!item.sale_price) return sum;
+
+    const price = Number(item.price) || 0;
+    const salePrice = Number(item.sale_price) || 0;
+
+    return sum + (price - salePrice) * item.quantity;
   }, 0);
 
   // Automatically recalculate coupon discount if cart totals update
@@ -204,6 +214,7 @@ export const CartProvider = ({ children }) => {
         setCartOpen,
         coupon,
         subtotal,
+        productDiscount,
         discountAmount,
         shippingFee,
         grandTotal,
