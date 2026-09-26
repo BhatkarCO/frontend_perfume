@@ -143,7 +143,7 @@ export default function InstagramFeed() {
       {/* ================================
           FULL-WIDTH CAROUSEL
       ================================= */}
-      <div className="relative group w-full px-12 sm:px-16 lg:px-20">
+      <div className="relative group w-full px-8 sm:px-16 lg:px-20">
         {/* LEFT ARROW */}
         <button
           type="button"
@@ -161,7 +161,7 @@ export default function InstagramFeed() {
         {/* POSTS */}
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth"
+          className="flex gap-4 overflow-x-auto overflow-y-hidden no-scrollbar scroll-smooth"
         >
           {posts.map((post, index) => {
             const isVideo = post.media_type === "VIDEO";
@@ -176,14 +176,14 @@ export default function InstagramFeed() {
                   duration: 0.45,
                   delay: index * 0.05,
                 }}
-                className="group/post shrink-0 w-[78vw] sm:w-[290px] md:w-[270px] lg:w-[280px]"
+                className="group/post shrink-0 w-[72vw] sm:w-[290px] md:w-[270px] lg:w-[280px]"
               >
                 {/* ============================
                     MEDIA
                 ============================= */}
                 <div
-                  className="relative aspect-square overflow-hidden
-                    bg-luxury-deep rounded-sm border border-luxury-lightgrey"
+                  className="relative aspect-[4/5] overflow-hidden
+  bg-luxury-deep rounded-sm border border-luxury-lightgrey"
                   onMouseEnter={() => {
                     if (isVideo) {
                       setHoveredVideoId(post.id);
