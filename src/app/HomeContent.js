@@ -15,6 +15,7 @@ import {
 import api from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/context/ToastContext";
+import InstagramFeed from "@/components/InstagramFeed";
 import { motion } from "framer-motion";
 
 export default function HomeContent() {
@@ -408,7 +409,7 @@ export default function HomeContent() {
             },
             {
               title: "Free Shipping",
-              desc: "Complimentary shipping across India on orders above ₹1500.",
+              desc: "Complimentary shipping across India on orders of 2 or more items.",
               icon: ShoppingBag,
             },
           ].map((benefit, idx) => {
@@ -475,6 +476,9 @@ export default function HomeContent() {
           </motion.div>
         </div>
       </section>
+
+      {/* 7. INSTAGRAM FEED */}
+      <InstagramFeed />
     </div>
   );
 }
