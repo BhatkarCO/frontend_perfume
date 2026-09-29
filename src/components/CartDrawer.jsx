@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
+import api from "@/utils/api";
 
 export const CartDrawer = () => {
   const router = useRouter();
@@ -43,8 +44,34 @@ export const CartDrawer = () => {
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
-  const [activeTab, setActiveTab] = useState("cart"); // 'cart' or 'saved'
+  const [activeTab, setActiveTab] = useState("cart");
+
+  const [activeCoupons, setActiveCoupons] = useState([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [showCoupons, setShowCoupons] = useState(false);
+
   const [showFreeShippingPopup, setShowFreeShippingPopup] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchActiveCoupons = async () => {
+      try {
+        setCouponsLoading(true);
+
+        const response = await api.get("/coupons/active");
+
+        setActiveCoupons(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("Failed to load active coupons:", error);
+        setActiveCoupons([]);
+      } finally {
+        setCouponsLoading(false);
+      }
+    };
+
+    fetchActiveCoupons();
+  }, [isOpen]);
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
@@ -54,6 +81,20 @@ export const CartDrawer = () => {
     if (!couponCode.trim()) return;
 
     const result = await applyCouponCode(couponCode);
+    if (result.success) {
+      setCouponSuccess(`Coupon applied! Saved ₹${result.discount}`);
+      setCouponCode("");
+    } else {
+      setCouponError(result.message);
+    }
+  };
+
+  const handleQuickApplyCoupon = async (code) => {
+    setCouponError("");
+    setCouponSuccess("");
+
+    const result = await applyCouponCode(code);
+
     if (result.success) {
       setCouponSuccess(`Coupon applied! Saved ₹${result.discount}`);
       setCouponCode("");
@@ -363,10 +404,109 @@ export const CartDrawer = () => {
             {/* Footer Summary */}
             {activeTab === "cart" && cartItems.length > 0 && (
               <div className="p-6 border-t border-luxury-lightgrey bg-white flex flex-col gap-4">
+                {/* Coupons Toggle */}
+                {activeCoupons.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCoupons((prev) => !prev)}
+                    className="w-full flex items-center justify-between border border-luxury-lightgrey bg-white hover:bg-luxury-deep/40 px-4 py-3 rounded-sm transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-gold" />
+
+                      <span className="text-[10px] uppercase tracking-[0.18em] font-bold text-luxury-black">
+                        Coupons
+                      </span>
+
+                      <span className="text-[8px] text-gray-400 uppercase tracking-wider">
+                        ({activeCoupons.length} Available)
+                      </span>
+                    </div>
+
+                    <span className="text-gold text-sm font-semibold">
+                      {showCoupons ? "−" : "+"}
+                    </span>
+                  </button>
+                )}
+
+                {/* Available Coupons */}
+                {showCoupons && activeCoupons.length > 0 && (
+                  <div className="border border-luxury-lightgrey rounded-sm bg-white overflow-hidden">
+                    <div className="px-3 py-2.5 border-b border-luxury-lightgrey">
+                      <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-luxury-black">
+                        Available Coupons
+                      </p>
+                    </div>
+
+                    <div className="max-h-36 overflow-y-auto divide-y divide-luxury-lightgrey">
+                      {couponsLoading ? (
+                        <div className="px-3 py-5 text-center">
+                          <p className="text-[9px] uppercase tracking-wider text-gray-400">
+                            Loading coupons...
+                          </p>
+                        </div>
+                      ) : (
+                        activeCoupons.map((couponItem) => {
+                          const isApplied = coupon?.code === couponItem.code;
+
+                          return (
+                            <div
+                              key={couponItem.code}
+                              className="flex items-center justify-between gap-3 px-3 py-3 hover:bg-luxury-deep/30 transition-colors"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-[10px] font-bold tracking-wider text-luxury-black">
+                                    {couponItem.code}
+                                  </span>
+
+                                  <span className="text-[9px] font-bold text-gold">
+                                    {couponItem.discount_percentage}% OFF
+                                  </span>
+                                </div>
+
+                                <p className="text-[8px] text-gray-400 mt-1">
+                                  {Number(couponItem.min_purchase || 0) > 0
+                                    ? `Min. purchase ₹${Number(
+                                        couponItem.min_purchase,
+                                      ).toFixed(0)}`
+                                    : "No minimum purchase"}
+
+                                  {couponItem.max_discount
+                                    ? ` • Max. ₹${Number(
+                                        couponItem.max_discount,
+                                      ).toFixed(0)}`
+                                    : ""}
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                disabled={isApplied}
+                                onClick={() =>
+                                  handleQuickApplyCoupon(couponItem.code)
+                                }
+                                className={`shrink-0 px-3 py-1.5 rounded-sm text-[8px] uppercase tracking-widest font-bold transition-all ${
+                                  isApplied
+                                    ? "bg-green-50 text-green-600 border border-green-200"
+                                    : "border border-gold/40 text-gold hover:bg-gold hover:text-white"
+                                }`}
+                              >
+                                {isApplied ? "Applied" : "Apply"}
+                              </button>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Coupon Code Section */}
                 <form onSubmit={handleApplyCoupon} className="flex gap-2">
                   <div className="relative flex-1">
                     <Tag className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+
                     <input
                       type="text"
                       placeholder="COUPON CODE"
@@ -375,6 +515,7 @@ export const CartDrawer = () => {
                       className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black placeholder-gray-400 text-xs pl-9 pr-4 py-2.5 rounded w-full focus:outline-none focus:border-gold uppercase tracking-widest"
                     />
                   </div>
+
                   <button
                     type="submit"
                     className="btn-gold px-4 py-2.5 text-xs rounded"
@@ -382,31 +523,6 @@ export const CartDrawer = () => {
                     Apply
                   </button>
                 </form>
-
-                {couponError && (
-                  <p className="text-[10px] text-red-500 font-semibold">
-                    {couponError}
-                  </p>
-                )}
-                {couponSuccess && (
-                  <p className="text-[10px] text-green-500 font-semibold">
-                    {couponSuccess}
-                  </p>
-                )}
-
-                {coupon && (
-                  <div className="flex items-center justify-between text-xs bg-gold/5 border border-gold/30 px-3 py-1.5 rounded">
-                    <span className="text-gold font-bold uppercase tracking-wider">
-                      Applied: {coupon.code}
-                    </span>
-                    <button
-                      onClick={removeCouponCode}
-                      className="text-red-500 hover:text-red-400 font-bold uppercase text-[10px]"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
 
                 {/* Pricing Summary */}
                 <div className="flex flex-col gap-2 text-xs text-gray-500">

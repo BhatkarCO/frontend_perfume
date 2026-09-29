@@ -7,16 +7,23 @@ import { Navbar } from "@/components/Navbar";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Footer } from "@/components/Footer";
+import CouponPopup from "@/components/CouponPopup";
 import { useAuth } from "@/context/AuthContext";
 
 // Dynamically import client-only, non-immediate widgets to optimize initial page bundle size
-const CartDrawer = dynamic(() => import("@/components/CartDrawer").then((mod) => mod.CartDrawer), {
-  ssr: false,
-});
+const CartDrawer = dynamic(
+  () => import("@/components/CartDrawer").then((mod) => mod.CartDrawer),
+  {
+    ssr: false,
+  },
+);
 
-const AIBot = dynamic(() => import("@/components/AIBot").then((mod) => mod.AIBot), {
-  ssr: false,
-});
+const AIBot = dynamic(
+  () => import("@/components/AIBot").then((mod) => mod.AIBot),
+  {
+    ssr: false,
+  },
+);
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -36,9 +43,7 @@ export default function LayoutWrapper({ children }) {
   if (isAdminPath || (isAuthenticated && isAdmin)) {
     return (
       <div className="flex flex-col min-h-screen bg-luxury-deep text-luxury-black">
-        <main className="flex-1">
-          {children}
-        </main>
+        <main className="flex-1">{children}</main>
       </div>
     );
   }
@@ -52,13 +57,14 @@ export default function LayoutWrapper({ children }) {
       <CartDrawer />
 
       {/* Main Content Area */}
-      <main className="flex-1 pb-20 md:pb-0">
-        {children}
-      </main>
+      <main className="flex-1 pb-20 md:pb-0">{children}</main>
 
       {/* Floating Widgets */}
       <WhatsAppButton />
       <AIBot />
+
+      {/* Coupon Popup */}
+      <CouponPopup />
 
       {/* Mobile Bottom Navigation Bar */}
       <Suspense fallback={null}>
