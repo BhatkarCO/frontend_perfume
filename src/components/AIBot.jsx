@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Send, X, Sparkles, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import api from "@/utils/api";
 
 export const AIBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,21 +48,12 @@ export const AIBot = () => {
     setIsTyping(true);
 
     try {
-      const response = await fetch(
-        "https://backend-perfume-10k4.onrender.com/api/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            session_id: sessionId,
-            message: text,
-          }),
-        },
-      );
+      const response = await api.post("/chat", {
+        session_id: sessionId,
+        message: text,
+      });
 
-      const data = await response.json();
+      const data = response.data;
 
       setMessages((prev) => [
         ...prev,
