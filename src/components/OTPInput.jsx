@@ -169,7 +169,7 @@ export default function OTPInput({ email, purpose, onVerifySuccess, onBack }) {
       {/* Resend Actions */}
       <div className="flex flex-col gap-4 items-center">
         <div className="flex items-center text-xs text-gray-500">
-          <span>Didn't receive code?</span>
+          <span>Didn&apos;t receive code?</span>
           {timer > 0 ? (
             <span className="text-gray-400 ml-1.5 font-medium">
               Resend in {timer}s

@@ -13,14 +13,16 @@ export default function OTPVerify() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedEmail = localStorage.getItem('registering_email');
-    if (!storedEmail) {
-      toast.info('Please register first.');
-      router.push('/register');
-    } else {
-      setEmail(storedEmail);
-      setLoading(false);
-    }
+    queueMicrotask(() => {
+      const storedEmail = localStorage.getItem('registering_email');
+      if (!storedEmail) {
+        toast.info('Please register first.');
+        router.push('/register');
+      } else {
+        setEmail(storedEmail);
+        setLoading(false);
+      }
+    });
   }, [router, toast]);
 
   if (loading) {

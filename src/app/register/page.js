@@ -165,7 +165,7 @@ export default function Register() {
           </div>
 
           <p className="text-[10px] text-gray-500 leading-relaxed font-light">
-            By signing up, you agree to Bhatkar & Co.'s{" "}
+            By signing up, you agree to Bhatkar &amp; Co.&apos;s{" "}
             <Link href="/policy/terms" className="text-gold underline">
               Terms & Conditions
             </Link>{" "}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
@@ -36,8 +36,8 @@ function DashboardContent() {
   const tabParam = searchParams.get("tab") || "profile";
 
   // State
-  const [profileName, setProfileName] = useState("");
-  const [profilePhone, setProfilePhone] = useState("");
+  const [profileName, setProfileName] = useState(null);
+  const [profilePhone, setProfilePhone] = useState(null);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -70,22 +70,6 @@ function DashboardContent() {
   const [postalCode, setPostalCode] = useState("");
   const [phone, setPhone] = useState("");
 
-  useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      router.replace("/login");
-      return;
-    }
-
-    setProfileName(user.name || "");
-    setProfilePhone(user.phone || "");
-
-    if (tabParam === "addresses") fetchAddresses();
-    if (tabParam === "orders") fetchOrders();
-    if (tabParam === "wishlist") fetchWishlist();
-  }, [loading, user, tabParam, router]);
-
   const handleTabChange = (tabName) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tabName);
@@ -97,16 +81,20 @@ function DashboardContent() {
   // --- PROFILE LOGIC ---
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    if (!profileName) return;
+    const name = profileName ?? user?.name ?? "";
+    const phone = profilePhone ?? user?.phone ?? "";
+    if (!name) return;
 
     setUpdatingProfile(true);
     try {
       const response = await api.put("/user/profile", {
-        name: profileName,
-        phone: profilePhone,
+        name,
+        phone,
       });
       toast.success(response.data.message);
-      updateLocalUserProfile({ name: profileName, phone: profilePhone });
+      updateLocalUserProfile({ name, phone });
+      setProfileName(name);
+      setProfilePhone(phone);
     } catch (err) {
       toast.error("Failed to update profile.");
     } finally {
@@ -179,14 +167,14 @@ function DashboardContent() {
   };
 
   // --- ADDRESSES LOGIC ---
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     try {
       const response = await api.get("/addresses");
       setAddresses(response.data);
-    } catch (err) {
-      console.error("Fetch addresses error:", err);
+    } catch {
+      toast.error("Unable to load addresses.");
     }
-  };
+  }, [toast]);
 
   const handleSaveAddress = async (e) => {
     e.preventDefault();
@@ -260,14 +248,14 @@ function DashboardContent() {
   };
 
   // --- ORDERS LOGIC ---
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const response = await api.get("/orders/my-orders");
       setOrders(response.data);
-    } catch (err) {
-      console.error("Fetch orders error:", err);
+    } catch {
+      toast.error("Unable to load orders.");
     }
-  };
+  }, [toast]);
 
   const handleViewOrder = async (orderId) => {
     try {
@@ -304,21 +292,42 @@ function DashboardContent() {
 
       toast.success("Invoice downloaded successfully.");
     } catch (err) {
-      console.error("Invoice error:", err);
-
       toast.error(err.response?.data?.message || "Failed to generate invoice.");
     }
   };
 
   // --- WISHLIST LOGIC ---
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     try {
       const response = await api.get("/wishlist");
       setWishlist(response.data);
-    } catch (err) {
-      console.error("Fetch wishlist error:", err);
+    } catch {
+      toast.error("Unable to load wishlist.");
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (loading) return;
+
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      if (tabParam === "addresses") fetchAddresses();
+      if (tabParam === "orders") fetchOrders();
+      if (tabParam === "wishlist") fetchWishlist();
+    });
+  }, [
+    loading,
+    user,
+    tabParam,
+    router,
+    fetchAddresses,
+    fetchOrders,
+    fetchWishlist,
+  ]);
 
   const handleRemoveWishlist = async (productId) => {
     try {
@@ -335,6 +344,34 @@ function DashboardContent() {
     toast.success(`${prod.name} added to bag.`);
   };
 
+  const getCustomerOrderStatus = (order) => {
+    const orderStatus = String(order?.status || "")
+      .trim()
+      .toUpperCase();
+
+    const shipmentStatus = String(
+      order?.shiprocket_status || order?.shiprocketStatus || "",
+    )
+      .trim()
+      .toUpperCase();
+
+    // Local order cancellation
+    if (orderStatus === "CANCELLED") {
+      return "Cancelled";
+    }
+
+    // Shiprocket cancellation.
+    // Shiprocket/provider payloads may use either
+    // CANCELLED or CANCELED.
+    if (shipmentStatus === "CANCELLED" || shipmentStatus === "CANCELED") {
+      return "Cancelled";
+    }
+
+    // Shiprocket AWB/processing failures must not make
+    // the overall customer order look failed.
+    return order?.status || "Pending";
+  };
+
   const getStatusStepIndex = (status) => {
     const steps = [
       "AWB_ASSIGNED",
@@ -346,6 +383,31 @@ function DashboardContent() {
     ];
 
     return steps.indexOf(status);
+  };
+
+  const getShipmentStatusLabel = (status) => {
+    const normalizedStatus = String(status || "")
+      .trim()
+      .toUpperCase();
+
+    const statusLabels = {
+      CREATED: "Shipment Created",
+      AWB_PENDING: "Awaiting AWB",
+      AWB_ASSIGNED: "AWB Assigned",
+      PICKUP_SCHEDULED: "Pickup Scheduled",
+      PICKED_UP: "Picked Up",
+      IN_TRANSIT: "In Transit",
+      OUT_FOR_DELIVERY: "Out for Delivery",
+      DELIVERED: "Delivered",
+      CANCELLED: "Cancelled",
+      CANCELED: "Cancelled",
+      RTO: "RTO",
+      RTO_DELIVERED: "RTO Delivered",
+      LOST: "Lost",
+      FAILED: "Awaiting AWB",
+    };
+
+    return statusLabels[normalizedStatus] || status || "Pending";
   };
 
   const getOrderValue = (order, ...keys) => {
@@ -373,11 +435,9 @@ function DashboardContent() {
           ),
         },
         {
-          label: "Status",
-          value: getOrderValue(
-            activeOrder,
-            "shiprocket_status",
-            "shiprocketStatus",
+          label: "Shipment Status",
+          value: getShipmentStatusLabel(
+            getOrderValue(activeOrder, "shiprocket_status", "shiprocketStatus"),
           ),
         },
         {
@@ -401,7 +461,6 @@ function DashboardContent() {
 
   useEffect(() => {
     if (activeOrder?.items) {
-      console.log(activeOrder.items);
     }
   }, [activeOrder]);
 
@@ -486,7 +545,7 @@ function DashboardContent() {
                     </label>
                     <input
                       type="text"
-                      value={profileName}
+                      value={profileName ?? user?.name ?? ""}
                       onChange={(e) => setProfileName(e.target.value)}
                       required
                       className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 py-2.5 rounded-sm focus:outline-none"
@@ -498,7 +557,7 @@ function DashboardContent() {
                     </label>
                     <input
                       type="tel"
-                      value={profilePhone}
+                      value={profilePhone ?? user?.phone ?? ""}
                       onChange={(e) => setProfilePhone(e.target.value)}
                       className="bg-luxury-deep border border-luxury-lightgrey text-luxury-black text-xs px-4 py-2.5 rounded-sm focus:outline-none"
                     />
@@ -768,19 +827,15 @@ function DashboardContent() {
                                 </span>
                                 <span
                                   className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded ${
-                                    (ord.shiprocket_status ||
-                                      ord.shiprocketStatus) === "DELIVERED"
-                                      ? "bg-green-500/10 text-green-600"
-                                      : (ord.shiprocket_status ||
-                                            ord.shiprocketStatus) ===
-                                          "CANCELLED"
-                                        ? "bg-red-500/10 text-red-500"
+                                    getCustomerOrderStatus(ord) === "Cancelled"
+                                      ? "bg-red-500/10 text-red-500"
+                                      : getCustomerOrderStatus(ord) ===
+                                          "Confirmed"
+                                        ? "bg-green-500/10 text-green-600"
                                         : "bg-yellow-500/10 text-yellow-600"
                                   }`}
                                 >
-                                  {ord.shiprocket_status ||
-                                    ord.shiprocketStatus ||
-                                    ord.status}
+                                  {getCustomerOrderStatus(ord)}
                                 </span>
                               </div>
                               <span className="text-[9px] text-gray-400 block mt-1 uppercase tracking-wider font-semibold">
@@ -854,126 +909,141 @@ function DashboardContent() {
                       <div className="text-right">
                         <p>
                           <strong>Grand Total:</strong> ₹
-                          {parseFloat(activeOrder.total_amount).toFixed(2)}
+                          {parseFloat(activeOrder.total_amount || 0).toFixed(2)}
                         </p>
+
                         <p className="mt-1">
-                          <strong>Status:</strong>{" "}
-                          {(
-                            activeOrder.shiprocket_status ||
-                            activeOrder.shiprocketStatus ||
-                            activeOrder.status
-                          ).toUpperCase()}
+                          <strong>Order Status:</strong>{" "}
+                          {getCustomerOrderStatus(activeOrder).toUpperCase()}
+                        </p>
+
+                        <p className="mt-1">
+                          <strong>Payment Status:</strong>{" "}
+                          <span
+                            className={
+                              activeOrder.payment_status === "Paid"
+                                ? "text-green-600 font-semibold"
+                                : activeOrder.payment_status === "Failed"
+                                  ? "text-red-600 font-semibold"
+                                  : "text-gray-500"
+                            }
+                          >
+                            {(
+                              activeOrder.payment_status || "Pending"
+                            ).toUpperCase()}
+                          </span>
                         </p>
                       </div>
                     </div>
 
                     {/* Visual Tracker Bar */}
-                    {!["CANCELLED", "RTO", "RTO_DELIVERED", "LOST"].includes(
-                      activeOrder.shiprocket_status ||
-                        activeOrder.shiprocketStatus,
-                    ) && (
-                      <div className="my-6">
-                        <h4 className="text-[10px] uppercase tracking-widest text-luxury-black font-bold mb-4 text-center sm:text-left">
-                          Delivery Progress
-                        </h4>
-                        <div className="flex flex-col sm:flex-row justify-between gap-6 sm:gap-2 relative">
-                          {/* Connecting Line */}
-                          <div className="hidden sm:block absolute left-4 right-4 top-4 h-0.5 bg-luxury-deep z-0">
-                            <div
-                              className="bg-gold h-full transition-all duration-500"
-                              style={{
-                                width: `${
-                                  (getStatusStepIndex(
-                                    activeOrder.shiprocket_status ||
-                                      activeOrder.shiprocketStatus,
-                                  ) /
-                                    5) *
-                                  100
-                                }%`,
-                              }}
-                            />
-                          </div>
-
-                          {/* Shipping Steps */}
-                          {[
-                            "AWB_ASSIGNED",
-                            "PICKUP_SCHEDULED",
-                            "PICKED_UP",
-                            "IN_TRANSIT",
-                            "OUT_FOR_DELIVERY",
-                            "DELIVERED",
-                          ].map((step, idx) => {
-                            const activeStepIdx = getStatusStepIndex(
-                              activeOrder.shiprocket_status ||
-                                activeOrder.shiprocketStatus,
-                            );
-
-                            const isDone = idx < activeStepIdx;
-                            const isCurrent = idx === activeStepIdx;
-
-                            const stepLabels = {
-                              AWB_ASSIGNED: "AWB Assigned",
-                              PICKUP_SCHEDULED: "Pickup Scheduled",
-                              PICKED_UP: "Picked Up",
-                              IN_TRANSIT: "In Transit",
-                              OUT_FOR_DELIVERY: "Out for Delivery",
-                              DELIVERED: "Delivered",
-                            };
-
-                            return (
+                    {getCustomerOrderStatus(activeOrder) !== "Cancelled" &&
+                      !["RTO", "RTO_DELIVERED", "LOST"].includes(
+                        activeOrder.shiprocket_status ||
+                          activeOrder.shiprocketStatus,
+                      ) && (
+                        <div className="my-6">
+                          <h4 className="text-[10px] uppercase tracking-widest text-luxury-black font-bold mb-4 text-center sm:text-left">
+                            Delivery Progress
+                          </h4>
+                          <div className="flex flex-col sm:flex-row justify-between gap-6 sm:gap-2 relative">
+                            {/* Connecting Line */}
+                            <div className="hidden sm:block absolute left-4 right-4 top-4 h-0.5 bg-luxury-deep z-0">
                               <div
-                                key={step}
-                                className="flex flex-col items-center gap-3 sm:gap-1.5 z-10"
-                              >
+                                className="bg-gold h-full transition-all duration-500"
+                                style={{
+                                  width: `${
+                                    (getStatusStepIndex(
+                                      activeOrder.shiprocket_status ||
+                                        activeOrder.shiprocketStatus,
+                                    ) /
+                                      5) *
+                                    100
+                                  }%`,
+                                }}
+                              />
+                            </div>
+
+                            {/* Shipping Steps */}
+                            {[
+                              "AWB_ASSIGNED",
+                              "PICKUP_SCHEDULED",
+                              "PICKED_UP",
+                              "IN_TRANSIT",
+                              "OUT_FOR_DELIVERY",
+                              "DELIVERED",
+                            ].map((step, idx) => {
+                              const activeStepIdx = getStatusStepIndex(
+                                activeOrder.shiprocket_status ||
+                                  activeOrder.shiprocketStatus,
+                              );
+
+                              const isDone = idx < activeStepIdx;
+                              const isCurrent = idx === activeStepIdx;
+
+                              const stepLabels = {
+                                AWB_ASSIGNED: "AWB Assigned",
+                                PICKUP_SCHEDULED: "Pickup Scheduled",
+                                PICKED_UP: "Picked Up",
+                                IN_TRANSIT: "In Transit",
+                                OUT_FOR_DELIVERY: "Out for Delivery",
+                                DELIVERED: "Delivered",
+                              };
+
+                              return (
                                 <div
-                                  className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
-                                    isCurrent
-                                      ? "border-gold bg-gold text-white"
-                                      : isDone
-                                        ? "border-gold bg-gold/10 text-gold"
-                                        : "border-gray-300 bg-luxury-deep text-gray-400"
-                                  }`}
+                                  key={step}
+                                  className="flex flex-col items-center gap-3 sm:gap-1.5 z-10"
                                 >
-                                  {step === "AWB_ASSIGNED" && (
-                                    <Package className="w-4 h-4" />
-                                  )}
+                                  <div
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                                      isCurrent
+                                        ? "border-gold bg-gold text-white"
+                                        : isDone
+                                          ? "border-gold bg-gold/10 text-gold"
+                                          : "border-gray-300 bg-luxury-deep text-gray-400"
+                                    }`}
+                                  >
+                                    {step === "AWB_ASSIGNED" && (
+                                      <Package className="w-4 h-4" />
+                                    )}
 
-                                  {step === "PICKUP_SCHEDULED" && (
-                                    <Clock className="w-4 h-4" />
-                                  )}
+                                    {step === "PICKUP_SCHEDULED" && (
+                                      <Clock className="w-4 h-4" />
+                                    )}
 
-                                  {step === "PICKED_UP" && (
-                                    <CheckCircle className="w-4 h-4" />
-                                  )}
+                                    {step === "PICKED_UP" && (
+                                      <CheckCircle className="w-4 h-4" />
+                                    )}
 
-                                  {step === "IN_TRANSIT" && (
-                                    <Truck className="w-4 h-4" />
-                                  )}
+                                    {step === "IN_TRANSIT" && (
+                                      <Truck className="w-4 h-4" />
+                                    )}
 
-                                  {step === "OUT_FOR_DELIVERY" && (
-                                    <MapPin className="w-4 h-4" />
-                                  )}
+                                    {step === "OUT_FOR_DELIVERY" && (
+                                      <MapPin className="w-4 h-4" />
+                                    )}
 
-                                  {step === "DELIVERED" && (
-                                    <Home className="w-4 h-4" />
-                                  )}
+                                    {step === "DELIVERED" && (
+                                      <Home className="w-4 h-4" />
+                                    )}
+                                  </div>
+
+                                  <span
+                                    className={`text-[10px] sm:text-xs tracking-wider text-center ${
+                                      isCurrent || isDone
+                                        ? "text-gold font-medium"
+                                        : "text-gray-400"
+                                    }`}
+                                  >
+                                    {stepLabels[step]}
+                                  </span>
                                 </div>
-
-                                <span
-                                  className={`text-[10px] sm:text-xs tracking-wider text-center ${
-                                    isCurrent || isDone
-                                      ? "text-gold font-medium"
-                                      : "text-gray-400"
-                                  }`}
-                                >
-                                  {stepLabels[step]}
-                                </span>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Order Items List */}
                     <div className="border-t border-luxury-lightgrey pt-4">

@@ -20,28 +20,20 @@ export const AIBot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
 
-  const [sessionId, setSessionId] = useState("guest-user");
-
-  useEffect(() => {
-    let storedSessionId = localStorage.getItem("fragrance_chat_session");
-
-    if (!storedSessionId) {
-      storedSessionId = `guest-${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 10)}`;
-
-      localStorage.setItem("fragrance_chat_session", storedSessionId);
-    }
-
-    setSessionId(storedSessionId);
-  }, []);
-
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
   const handleSend = async (text) => {
     if (!text.trim()) return;
+
+    let sessionId = localStorage.getItem("fragrance_chat_session");
+    if (!sessionId) {
+      sessionId = `guest-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 10)}`;
+      localStorage.setItem("fragrance_chat_session", sessionId);
+    }
 
     // Add User Message
     const userMsg = {
@@ -79,9 +71,7 @@ export const AIBot = () => {
           text: data.reply,
         },
       ]);
-    } catch (error) {
-      console.error(error);
-
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -160,13 +150,16 @@ export const AIBot = () => {
                           <strong className="font-bold">{children}</strong>
                         ),
 
-                        img: ({ src, alt }) => (
-                          <img
-                            src={src}
-                            alt={alt || "Fragrance"}
-                            className="w-full max-w-[180px] h-[180px] object-cover rounded-md mt-2 mb-2 border border-luxury-lightgrey"
-                          />
-                        ),
+                        img: ({ src, alt }) =>
+                          src ? (
+                            <Image
+                              src={src}
+                              alt={alt || "Fragrance"}
+                              width={180}
+                              height={180}
+                              className="w-full max-w-[180px] h-[180px] object-cover rounded-md mt-2 mb-2 border border-luxury-lightgrey"
+                            />
+                          ) : null,
 
                         a: ({ href, children }) => {
                           let finalHref = href;

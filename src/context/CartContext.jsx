@@ -24,23 +24,25 @@ export const CartProvider = ({ children }) => {
 
   // Load cart from local storage
   useEffect(() => {
-    const storedCart = localStorage.getItem("bhatkar_cart");
-    const storedSaved = localStorage.getItem("bhatkar_saved");
-    if (storedCart) {
-      try {
-        setCartItems(JSON.parse(storedCart));
-      } catch (e) {
-        console.error("Error parsing cart items:", e);
+    queueMicrotask(() => {
+      const storedCart = localStorage.getItem("bhatkar_cart");
+      const storedSaved = localStorage.getItem("bhatkar_saved");
+      if (storedCart) {
+        try {
+          setCartItems(JSON.parse(storedCart));
+        } catch {
+          setCartItems([]);
+        }
       }
-    }
-    if (storedSaved) {
-      try {
-        setSavedItems(JSON.parse(storedSaved));
-      } catch (e) {
-        console.error("Error parsing saved items:", e);
+      if (storedSaved) {
+        try {
+          setSavedItems(JSON.parse(storedSaved));
+        } catch {
+          setSavedItems([]);
+        }
       }
-    }
-    setIsLoaded(true);
+      setIsLoaded(true);
+    });
   }, []);
 
   // Save cart to local storage when it updates

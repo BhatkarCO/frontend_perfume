@@ -63,7 +63,6 @@ export const CartDrawer = () => {
 
         setActiveCoupons(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
-        console.error("Failed to load active coupons:", error);
         setActiveCoupons([]);
       } finally {
         setCouponsLoading(false);
@@ -184,7 +183,7 @@ export const CartDrawer = () => {
                       Your bag is empty
                     </p>
                     <p className="text-xs max-w-xs font-light leading-relaxed">
-                      Fill it with Bhatkar & Co.'s luxurious scents to
+                      Fill it with Bhatkar &amp; Co.&apos;s luxurious scents to
                       experience true craftsmanship.
                     </p>
                     <button

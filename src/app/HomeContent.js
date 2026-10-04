@@ -37,8 +37,7 @@ export default function HomeContent() {
 
         setBestSellers(bsRes.data.products);
         setNewArrivals(naRes.data.products);
-      } catch (err) {
-        console.error("Error fetching home page products:", err);
+      } catch {
       } finally {
         setLoading(false);
       }

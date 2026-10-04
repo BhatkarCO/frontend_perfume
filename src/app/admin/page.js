@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import api from "@/utils/api";
@@ -26,7 +27,16 @@ function AdminContent() {
   const { user, isAdmin, loading: authLoading, login, logout } = useAuth();
   const toast = useToast();
 
-  const [activeTab, setActiveTab] = useState("reports");
+  const adminTabs = [
+    "reports",
+    "breakdown",
+    "products",
+    "orders",
+    "users",
+    "coupons",
+    "settings",
+  ];
+  const activeTab = adminTabs.includes(tabParam) ? tabParam : "reports";
   const [activeCollectionTab, setActiveCollectionTab] = useState("date");
   const [loading, setLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState("");
@@ -49,7 +59,8 @@ function AdminContent() {
   const [orderSearchQuery, setOrderSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [filterTrigger, setFilterTrigger] = useState(0);
+  const [appliedStartDate, setAppliedStartDate] = useState("");
+  const [appliedEndDate, setAppliedEndDate] = useState("");
   const [isFilterApplied, setIsFilterApplied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -128,23 +139,16 @@ function AdminContent() {
   const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   useEffect(() => {
-    if (
-      tabParam &&
-      [
-        "reports",
-        "breakdown",
-        "products",
-        "orders",
-        "users",
-        "coupons",
-        "settings",
-      ].includes(tabParam)
-    ) {
-      setActiveTab(tabParam);
+    if (!authLoading && user && !isAdmin) {
+      router.replace("/dashboard");
     }
-  }, [tabParam]);
+  }, [authLoading, user, isAdmin, router]);
 
-  // Admin access check redirect removed so customer sessions can log in as admin from here
+  const handleAdminTabChange = (tab) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.push(`/admin?${params.toString()}`);
+  };
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -176,8 +180,12 @@ function AdminContent() {
         if (activeTab === "reports" || activeTab === "breakdown") {
           let url = "/admin/reports";
           const queryParams = [];
-          if (startDate) queryParams.push(`startDate=${startDate}`);
-          if (endDate) queryParams.push(`endDate=${endDate}`);
+          if (appliedStartDate) {
+            queryParams.push(`startDate=${appliedStartDate}`);
+          }
+          if (appliedEndDate) {
+            queryParams.push(`endDate=${appliedEndDate}`);
+          }
           if (queryParams.length > 0) {
             url += `?${queryParams.join("&")}`;
           }
@@ -203,7 +211,6 @@ function AdminContent() {
           setCoupons(res.data || []);
         }
       } catch (err) {
-        console.error("Error fetching admin data:", err);
         toast.error("Failed to load admin module data.");
       } finally {
         setLoading(false);
@@ -211,7 +218,7 @@ function AdminContent() {
     };
 
     fetchData();
-  }, [activeTab, user, isAdmin, toast, filterTrigger]);
+  }, [activeTab, user, isAdmin, toast, appliedStartDate, appliedEndDate]);
   const handleForgotPassword = async () => {
     if (!forgotEmail) {
       toast.error("Please enter your admin email.");
@@ -275,15 +282,17 @@ function AdminContent() {
       toast.error("Please select both Start Date and End Date.");
       return;
     }
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
     setIsFilterApplied(true);
-    setFilterTrigger((prev) => prev + 1);
   };
 
   const handleResetFilter = () => {
     setStartDate("");
     setEndDate("");
+    setAppliedStartDate("");
+    setAppliedEndDate("");
     setIsFilterApplied(false);
-    setFilterTrigger((prev) => prev + 1);
   };
 
   const dateWiseTotalOrders =
@@ -323,13 +332,11 @@ function AdminContent() {
       toast.success(`Product "${name}" deleted successfully.`);
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      console.error("Delete product error:", err);
       toast.error(err.response?.data?.message || "Failed to delete product.");
     }
   };
 
   const handleOpenEditModal = (prod) => {
-    console.log("Product data:", prod);
     setEditProdId(prod.id);
     setEditProdName(prod.name || "");
     setEditProdShortDesc(prod.short_description || "");
@@ -437,7 +444,6 @@ function AdminContent() {
       const res = await api.get("/products");
       setProducts(res.data.products || []);
     } catch (err) {
-      console.error("Edit product error:", err);
       toast.error(err.response?.data?.message || "Failed to update product.");
     } finally {
       setEditLoading(false);
@@ -494,7 +500,6 @@ function AdminContent() {
       link.click();
       toast.success(`Invoice for order #${orderId} downloaded.`);
     } catch (err) {
-      console.error("Error downloading invoice:", err);
       toast.error("Failed to download invoice.");
     }
   };
@@ -507,8 +512,6 @@ function AdminContent() {
 
       setActiveOrder(res.data);
     } catch (err) {
-      console.error("Error fetching admin order details:", err);
-
       toast.error(
         err.response?.data?.message || "Failed to load order details.",
       );
@@ -608,7 +611,6 @@ function AdminContent() {
       const res = await api.get("/products");
       setProducts(res.data.products || []);
     } catch (err) {
-      console.error("Add product error:", err);
       toast.error(err.response?.data?.message || "Failed to add product.");
     } finally {
       setAddLoading(false);
@@ -735,27 +737,59 @@ function AdminContent() {
     ord.id.toString().includes(orderSearchQuery.trim()),
   );
   const getOrderStatusLabel = (order) => {
-    const status = order.shiprocket_status || order.status;
+    const orderStatus = String(order?.status || "")
+      .trim()
+      .toUpperCase();
 
-    const statusLabels = {
+    const shipmentStatus = String(
+      order?.shiprocket_status || order?.shiprocketStatus || "",
+    )
+      .trim()
+      .toUpperCase();
+
+    // Cancellation always takes priority.
+    if (
+      orderStatus === "CANCELLED" ||
+      shipmentStatus === "CANCELLED" ||
+      shipmentStatus === "CANCELED"
+    ) {
+      return "Cancelled";
+    }
+
+    const shipmentLabels = {
+      CREATED: "Shipment Created",
+      AWB_PENDING: "Awaiting AWB",
       AWB_ASSIGNED: "AWB Assigned",
       PICKUP_SCHEDULED: "Pickup Scheduled",
       PICKED_UP: "Picked Up",
       IN_TRANSIT: "In Transit",
       OUT_FOR_DELIVERY: "Out for Delivery",
       DELIVERED: "Delivered",
-      CANCELLED: "Cancelled",
       RTO: "RTO",
       RTO_DELIVERED: "RTO Delivered",
       LOST: "Lost",
+      FAILED: "Awaiting AWB",
     };
 
-    return statusLabels[status] || status || "Pending";
+    // For active shipments, show the carrier/shipment progress.
+    if (shipmentLabels[shipmentStatus]) {
+      return shipmentLabels[shipmentStatus];
+    }
+
+    // Otherwise fall back to the local order status.
+    return order?.status || "Pending";
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-[85vh] bg-luxury-deep text-luxury-black">
-      {!authLoading && (!user || !isAdmin) ? (
+      {authLoading || (user && !isAdmin) ? (
+        <div
+          className="flex min-h-[60vh] items-center justify-center text-xs font-semibold uppercase tracking-widest text-gold"
+          role="status"
+        >
+          Checking admin access...
+        </div>
+      ) : !user ? (
         <div className="max-w-lg mx-auto bg-white border border-luxury-lightgrey rounded-sm shadow-md p-8">
           <div className="text-center mb-8">
             <h1 className="font-playfair text-2xl font-bold tracking-wide text-luxury-black uppercase">
@@ -858,7 +892,7 @@ function AdminContent() {
                       <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-luxury-lightgrey rounded-sm shadow-lg py-1 z-20">
                         <button
                           onClick={() => {
-                            setActiveTab("settings");
+                            handleAdminTabChange("settings");
                             setMenuOpen(false);
                           }}
                           className="w-full text-left px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 hover:text-luxury-black hover:bg-luxury-deep transition-colors font-bold cursor-pointer"
@@ -892,7 +926,7 @@ function AdminContent() {
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-2">
               <button
-                onClick={() => setActiveTab("settings")}
+                onClick={() => handleAdminTabChange("settings")}
                 className="bg-white hover:bg-gray-50 text-luxury-black border border-luxury-lightgrey text-[10px] tracking-widest font-semibold uppercase px-4 py-2.5 rounded-md transition-all duration-300 focus:outline-none shadow-sm hover:shadow text-center cursor-pointer"
                 type="button"
               >
@@ -924,7 +958,7 @@ function AdminContent() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleAdminTabChange(tab.id)}
                 className={`py-3.5 px-6 shrink-0 border-b-2 font-bold transition-all ${activeTab === tab.id ? "border-gold text-gold bg-luxury-deep" : "border-transparent text-gray-400 hover:text-gray-600"}`}
                 type="button"
               >
@@ -1209,17 +1243,25 @@ function AdminContent() {
                                   <div className="flex items-center gap-2">
                                     <span
                                       className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-sm border ${
-                                        status === "DELIVERED"
-                                          ? "text-green-600 border-green-600/30 bg-green-600/5"
-                                          : status === "CANCELLED"
-                                            ? "text-red-500 border-red-500/30 bg-red-500/5"
-                                            : status === "IN_TRANSIT" ||
-                                                status === "OUT_FOR_DELIVERY"
+                                        getOrderStatusLabel(ord) === "Cancelled"
+                                          ? "text-red-500 border-red-500/30 bg-red-500/5"
+                                          : getOrderStatusLabel(ord) ===
+                                              "Delivered"
+                                            ? "text-green-600 border-green-600/30 bg-green-600/5"
+                                            : getOrderStatusLabel(ord) ===
+                                                  "In Transit" ||
+                                                getOrderStatusLabel(ord) ===
+                                                  "Out for Delivery"
                                               ? "text-purple-500 border-purple-500/30 bg-purple-500/5"
-                                              : status === "PICKED_UP" ||
-                                                  status === "PICKUP_SCHEDULED"
+                                              : getOrderStatusLabel(ord) ===
+                                                    "Picked Up" ||
+                                                  getOrderStatusLabel(ord) ===
+                                                    "Pickup Scheduled"
                                                 ? "text-blue-500 border-blue-500/30 bg-blue-500/5"
-                                                : "text-gold border-gold/30 bg-gold/5"
+                                                : getOrderStatusLabel(ord) ===
+                                                    "Confirmed"
+                                                  ? "text-green-500 border-green-500/30 bg-green-500/5"
+                                                  : "text-gold border-gold/30 bg-gold/5"
                                       }`}
                                     >
                                       {getOrderStatusLabel(ord)}
@@ -1304,10 +1346,24 @@ function AdminContent() {
                             </p>
 
                             <p className="text-xs text-gray-500 mt-1">
-                              Status:
+                              Order Status:
                               <span className="text-gold font-bold ml-1">
-                                {activeOrder.shiprocket_status ||
-                                  activeOrder.status}
+                                {activeOrder.status || "Pending"}
+                              </span>
+                            </p>
+
+                            <p className="text-xs text-gray-500 mt-1">
+                              Payment Status:
+                              <span
+                                className={`font-bold ml-1 ${
+                                  activeOrder.payment_status === "Paid"
+                                    ? "text-green-600"
+                                    : activeOrder.payment_status === "Failed"
+                                      ? "text-red-600"
+                                      : "text-gray-500"
+                                }`}
+                              >
+                                {activeOrder.payment_status || "Pending"}
                               </span>
                             </p>
                           </div>
@@ -1358,9 +1414,11 @@ function AdminContent() {
                             >
                               <div className="flex items-center gap-3">
                                 {item.primary_image && (
-                                  <img
+                                  <Image
                                     src={item.primary_image}
                                     alt={item.name}
+                                    width={48}
+                                    height={48}
                                     className="w-12 h-12 object-cover"
                                   />
                                 )}
@@ -1409,8 +1467,10 @@ function AdminContent() {
                           </p>
 
                           <p>
-                            <strong>Status:</strong>{" "}
-                            {activeOrder.shiprocket_status || "N/A"}
+                            <strong>Shipment Status:</strong>{" "}
+                            {activeOrder.shiprocket_status === "AWB_PENDING"
+                              ? "Awaiting AWB"
+                              : activeOrder.shiprocket_status || "N/A"}
                           </p>
 
                           <p>
@@ -2360,9 +2420,11 @@ function AdminContent() {
                         key={img.image_url}
                         className="relative flex-shrink-0 w-24 h-24 border rounded-md overflow-hidden"
                       >
-                        <img
+                        <Image
                           src={img.image_url}
                           alt="Product"
+                          width={96}
+                          height={96}
                           className="w-full h-full object-cover"
                         />
 
@@ -2518,7 +2580,7 @@ function AdminContent() {
                 </h3>
 
                 <p className="mt-2 text-sm text-gray-500">
-                  This product doesn't have any customer reviews.
+                  This product doesn&apos;t have any customer reviews.
                 </p>
               </div>
             ) : (

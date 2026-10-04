@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/utils/api";
 
 const AuthContext = createContext(null);
+const googleAuthUrl = "/api/auth/google";
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -45,8 +46,6 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: true, message: response.data.message };
     } catch (error) {
-      console.error("Registration error:", error);
-
       return {
         success: false,
         message: error.response?.data?.message || "Registration failed.",
@@ -77,8 +76,6 @@ export const AuthProvider = ({ children }) => {
         user: loggedUser,
       };
     } catch (error) {
-      console.error("Login error:", error);
-
       return {
         success: false,
         message: error.response?.data?.message || "Login failed.",
@@ -88,8 +85,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = () => {
-  window.location.href = "/api/auth/google";
-};
+    window.location.href = new URL(googleAuthUrl, window.location.origin).href;
+  };
 
   /**
    * Logout Action
@@ -98,8 +95,8 @@ export const AuthProvider = ({ children }) => {
     //changed
     try {
       await api.post("/auth/logout");
-    } catch (error) {
-      console.error(error);
+    } catch {
+      // Clear local auth state even when the server-side logout request fails.
     }
 
     setUser(null);
@@ -121,8 +118,6 @@ export const AuthProvider = ({ children }) => {
         success: true,
       };
     } catch (error) {
-      console.error("OTP verify error:", error);
-
       return {
         success: false,
         message: error.response?.data?.message || "OTP verification failed.",
@@ -139,7 +134,6 @@ export const AuthProvider = ({ children }) => {
       await api.post("/auth/resend-otp", { email, purpose });
       return { success: true };
     } catch (error) {
-      console.error("Resend OTP error:", error);
       const message = error.response?.data?.message || "Failed to resend OTP.";
       return { success: false, message };
     }
@@ -153,7 +147,6 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post("/auth/forgot-password", { email });
       return { success: true, message: response.data.message };
     } catch (error) {
-      console.error("Forgot password error:", error);
       const message =
         error.response?.data?.message || "Forgot password request failed.";
       return {
@@ -179,8 +172,6 @@ export const AuthProvider = ({ children }) => {
         message: response.data.message,
       };
     } catch (error) {
-      console.error("Verify forgot password OTP error:", error);
-
       return {
         success: false,
         message: error.response?.data?.message || "OTP verification failed.",
@@ -204,8 +195,6 @@ export const AuthProvider = ({ children }) => {
         message: response.data.message,
       };
     } catch (error) {
-      console.error("Reset password error:", error);
-
       return {
         success: false,
         message:

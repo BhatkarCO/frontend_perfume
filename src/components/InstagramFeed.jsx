@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   ChevronLeft,
   ChevronRight,
@@ -39,8 +40,7 @@ export default function InstagramFeed() {
         if (data?.username) {
           setUsername(data.username);
         }
-      } catch (err) {
-        console.error("Instagram feed error:", err);
+      } catch {
         setError(true);
       } finally {
         setLoading(false);
@@ -210,10 +210,13 @@ export default function InstagramFeed() {
                     </video>
                   ) : (
                     <>
-                      <img
+                      <Image
                         src={post.media_url}
                         alt={post.caption || "Bhatkar & Co. Instagram post"}
-                        loading="lazy"
+                        width={800}
+                        height={1000}
+                        sizes="(max-width: 640px) 72vw, (max-width: 768px) 290px, 280px"
+                        unoptimized
                         className="w-full h-full object-cover transition-transform duration-700 group-hover/post:scale-105"
                       />
 

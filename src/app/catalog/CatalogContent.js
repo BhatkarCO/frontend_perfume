@@ -41,12 +41,12 @@ export default function CatalogContent() {
       try {
         const res = await api.get('/categories');
         setCategories(res.data);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
+      } catch {
+        toast.error("Unable to load categories.");
       }
     };
     fetchCats();
-  }, []);
+  }, [toast]);
 
   // Fetch products when filters or url parameters change
   useEffect(() => {
@@ -68,15 +68,25 @@ export default function CatalogContent() {
         const res = await api.get(`/products?${queryParams.toString()}`);
         setProducts(res.data.products);
         setPagination(res.data.pagination);
-      } catch (err) {
-        console.error('Error fetching products:', err);
+      } catch {
+        toast.error("Unable to load products.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [categoryParam, searchParam, gender, priceRange, selectedRating, inStockOnly, sortByParam, pageParam]);
+  }, [
+    categoryParam,
+    searchParam,
+    gender,
+    priceRange,
+    selectedRating,
+    inStockOnly,
+    sortByParam,
+    pageParam,
+    toast,
+  ]);
 
   const updateSearchParams = (key, value) => {
     const params = new URLSearchParams(searchParams.toString());

@@ -19,7 +19,13 @@ function LoginContent() {
   const [formLoading, setFormLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const redirectPath = searchParams.get("redirect") || "/dashboard";
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectPath =
+    requestedRedirect?.startsWith("/") &&
+    !requestedRedirect.startsWith("//") &&
+    !requestedRedirect.includes("\\")
+      ? requestedRedirect
+      : "/dashboard";
 
   useEffect(() => {
     // Wait for auth to finish loading before checking authentication
@@ -151,7 +157,7 @@ function LoginContent() {
 
         {/* Footer Link */}
         <p className="text-center text-xs text-gray-500 font-light">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/register"
             className="text-gold hover:text-gold-dark font-bold uppercase tracking-wider text-[10px]"

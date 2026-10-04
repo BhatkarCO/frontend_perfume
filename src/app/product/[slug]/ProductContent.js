@@ -67,15 +67,15 @@ export default function ProductContent() {
           const isWish = wishRes.data.some(w => w.id === data.id);
           setWishlisted(isWish);
         }
-      } catch (err) {
-        console.error('Error fetching product details:', err);
+      } catch {
+        toast.error("Unable to load product details.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchDetails();
-  }, [slug, isAuthenticated]);
+  }, [slug, isAuthenticated, toast]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -204,9 +204,11 @@ export default function ProductContent() {
             onMouseLeave={handleMouseLeave}
             className="relative rounded-sm overflow-hidden img-zoom-container select-none bg-transparent"
           >
-            <img
+            <Image
               src={activeImage || 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600'}
               alt={product.name}
+              width={900}
+              height={900}
               className="w-full h-auto max-h-[75vh] object-contain rounded-sm"
             />
 

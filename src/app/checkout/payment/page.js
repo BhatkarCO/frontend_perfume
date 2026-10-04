@@ -129,13 +129,13 @@ function PaymentContent() {
         const res = await api.get("/addresses");
         const matchedAddress = res.data.find((item) => item.id === addressId);
         setSelectedAddress(matchedAddress || null);
-      } catch (err) {
-        console.error("Unable to load address details.", err);
+      } catch {
+        toast.error("Unable to load address details.");
       }
     };
 
     fetchAddressDetails();
-  }, [addressId, isAuthenticated]);
+  }, [addressId, isAuthenticated, toast]);
 
   useEffect(() => {
     if (!addressId || !selectedAddress?.postal_code) return;
@@ -191,14 +191,12 @@ function PaymentContent() {
 
         // Validate before making request
         if (!addressId) {
-          console.error("addressId is missing:", addressId);
           setPreviewError("Shipping address ID is missing.");
           setPreviewLoading(false);
           return;
         }
 
         if (!cartItems || cartItems.length === 0) {
-          console.error("cartItems is empty:", cartItems);
           setPreviewError("Cart is empty. Please add items.");
           setPreviewLoading(false);
           return;
@@ -215,8 +213,6 @@ function PaymentContent() {
         };
 
         const orderRes = await api.post("/orders/preview", payload);
-
-        console.log("✅ Order preview response:", orderRes.data);
 
         const { pricing, shippingCharge: backendShippingCharge } =
           orderRes.data;
@@ -244,10 +240,6 @@ function PaymentContent() {
         setPreviewMethod(paymentMethod);
         setOrderPreview(orderRes.data);
       } catch (err) {
-        console.error(
-          "❌ Order preview failed:",
-          err.response?.data || err.message,
-        );
         setPreviewError(
           err.response?.data?.message ||
             "Unable to preview order pricing at this time.",
@@ -267,6 +259,7 @@ function PaymentContent() {
     orderPlaced,
     paymentMethod,
     previewMethod,
+    orderPreview,
     selectedAddress?.postal_code,
     shippingCharge,
     subtotal,
@@ -387,7 +380,6 @@ function PaymentContent() {
         razorpayOrderId,
         amount,
         currency,
-        isMock,
         pricing,
         shippingCharge: backendShippingCharge,
       } = orderData;
@@ -409,20 +401,6 @@ function PaymentContent() {
       setPricingSummary({ deliveryCharges, payable: payableAmount });
       setPricingDetails(pricing || {});
 
-      if (isMock) {
-        await api.post("/orders/verify", {
-          orderId,
-          razorpayOrderId,
-          razorpayPaymentId: `pay_mock_${Date.now()}`,
-          razorpaySignature: "mock_signature",
-        });
-
-        setProcessing(false);
-        handlePaymentSuccess(orderId);
-        return;
-      }
-
-      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
 

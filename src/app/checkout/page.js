@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import api from "@/utils/api";
 import confetti from "canvas-confetti";
+import Script from "next/script";
 
 export default function Checkout() {
   const router = useRouter();
@@ -106,29 +107,31 @@ export default function Checkout() {
       return;
     }
 
+    const fetchAddresses = async () => {
+      try {
+        const response = await api.get("/addresses");
+        setAddresses(response.data);
+        if (response.data.length > 0) {
+          const def =
+            response.data.find((address) => address.is_default) ||
+            response.data[0];
+          setSelectedAddressId(def.id);
+        }
+      } catch {
+        toast.error("Unable to load saved addresses.");
+      }
+    };
+
     fetchAddresses();
   }, [
     loading,
     isAuthenticated,
-    cartItems,
+    cartItems.length,
     step,
     router,
     orderCompleted,
     toast,
   ]);
-
-  const fetchAddresses = async () => {
-    try {
-      const response = await api.get("/addresses");
-      setAddresses(response.data);
-      if (response.data.length > 0) {
-        const def = response.data.find((a) => a.is_default) || response.data[0];
-        setSelectedAddressId(def.id);
-      }
-    } catch (err) {
-      console.error("Error fetching addresses:", err);
-    }
-  };
 
   useEffect(() => {
     if (!selectedAddressId || cartItems.length === 0) return;
@@ -152,16 +155,11 @@ export default function Checkout() {
           payload.couponCode = coupon.code;
         }
 
-        console.log("Sending order preview payload:", payload);
-
         const response = await api.post("/orders/preview", payload);
 
-        console.log("Order preview response:", response.data);
         setPricing(response.data.pricing || null);
         setOrderPreview(response.data);
       } catch (err) {
-        console.error("Order preview pricing failed:", err);
-        console.error("Error response:", err.response?.data);
         setPreviewError(
           err.response?.data?.message ||
             "Unable to calculate shipping and order preview.",
@@ -172,7 +170,7 @@ export default function Checkout() {
     };
 
     fetchPricingPreview();
-  }, [selectedAddressId, cartItems.length, subtotal, coupon?.code]);
+  }, [selectedAddressId, cartItems, subtotal, coupon?.code, toast]);
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
@@ -238,68 +236,50 @@ export default function Checkout() {
 
       const orderRes = await api.post("/orders/create", payload);
 
-      const { orderId, razorpayOrderId, amount, currency, isMock, pricing } =
+      const { orderId, razorpayOrderId, amount, currency, pricing } =
         orderRes.data;
 
       setPricing(pricing);
 
-      if (isMock) {
-        setTimeout(async () => {
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: amount * 100,
+        currency,
+        name: "BHATKAR & CO. PERFUMES",
+        description: "Luxury Fragrance Order Checkout",
+        order_id: razorpayOrderId,
+        handler: async function (response) {
           try {
             await api.post("/orders/verify", {
               orderId,
-              razorpayOrderId,
-              razorpayPaymentId: `pay_mock_${Date.now()}`,
-              razorpaySignature: "mock_sig",
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
             });
 
             handlePaymentSuccess(orderId);
-          } catch (verifyErr) {
-            toast.error("Order validation failed.");
+          } catch (err) {
+            toast.error("Payment signature validation failed.");
             setProcessingOrder(false);
           }
-        }, 1500);
-      } else {
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-          amount: amount * 100,
-          currency,
-          name: "BHATKAR & CO. PERFUMES",
-          description: "Luxury Fragrance Order Checkout",
-          order_id: razorpayOrderId,
-          handler: async function (response) {
-            try {
-              await api.post("/orders/verify", {
-                orderId,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-              });
+        },
+        prefill: {
+          name: user.name,
+          email: user.email,
+        },
+        theme: {
+          color: "#B89765",
+        },
+        modal: {
+          ondismiss: function () {
+            toast.warning("Payment process cancelled by user.");
+            setProcessingOrder(false);
+          },
+        },
+      };
 
-              handlePaymentSuccess(orderId);
-            } catch (err) {
-              toast.error("Payment signature validation failed.");
-              setProcessingOrder(false);
-            }
-          },
-          prefill: {
-            name: user.name,
-            email: user.email,
-          },
-          theme: {
-            color: "#B89765",
-          },
-          modal: {
-            ondismiss: function () {
-              toast.warning("Payment process cancelled by user.");
-              setProcessingOrder(false);
-            },
-          },
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      }
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Error processing payment order.",
@@ -328,6 +308,10 @@ export default function Checkout() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-[75vh] bg-luxury-deep">
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+      />
       {/* Steps Indicator */}
       {step !== 3 && (
         <div className="flex justify-center items-center gap-6 mb-10 text-[10px] tracking-widest uppercase font-bold text-gray-400">

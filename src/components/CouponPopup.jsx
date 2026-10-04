@@ -28,7 +28,7 @@ export default function CouponPopup() {
           setVisible(true);
         }
       } catch (error) {
-        console.error("Failed to load active coupons:", error);
+        setCoupons([]);
       } finally {
         setLoading(false);
       }
@@ -47,8 +47,8 @@ export default function CouponPopup() {
       setTimeout(() => {
         setCopiedCode("");
       }, 2000);
-    } catch (error) {
-      console.error("Copy coupon failed:", error);
+    } catch {
+      setCopiedCode("");
     }
   };
 
