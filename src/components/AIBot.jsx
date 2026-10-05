@@ -10,6 +10,7 @@ import api from "@/utils/api";
 
 export const AIBot = () => {
   const [isOpen, setIsOpen] = useState(false);
+
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -17,24 +18,37 @@ export const AIBot = () => {
       text: "Hello! I am your Bhatkar & Co. AI Fragrance Stylist. Tell me what notes or vibes you prefer, and I will recommend the perfect scent for you.",
     },
   ]);
+
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+
   const chatEndRef = useRef(null);
 
+  // Keep a persistent session for the AI conversation
+  const [sessionId, setSessionId] = useState("guest-user");
+
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    let storedSessionId = localStorage.getItem("fragrance_chat_session");
+
+    if (!storedSessionId) {
+      storedSessionId = `guest-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 10)}`;
+
+      localStorage.setItem("fragrance_chat_session", storedSessionId);
+    }
+
+    setSessionId(storedSessionId);
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   }, [messages, isTyping]);
 
   const handleSend = async (text) => {
     if (!text.trim()) return;
-
-    let sessionId = localStorage.getItem("fragrance_chat_session");
-    if (!sessionId) {
-      sessionId = `guest-${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 10)}`;
-      localStorage.setItem("fragrance_chat_session", sessionId);
-    }
 
     // Add User Message
     const userMsg = {
@@ -83,12 +97,25 @@ export const AIBot = () => {
 
   return (
     <div className="fixed bottom-20 md:bottom-6 right-6 z-40">
-      <AnimatePresence>
+      <motion.div>
+        {/* Chat Window */}
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.9 }}
+            initial={{
+              opacity: 0,
+              y: 50,
+              scale: 0.9,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+            }}
+            exit={{
+              opacity: 0,
+              y: 50,
+              scale: 0.9,
+            }}
             className="bg-white border border-luxury-lightgrey rounded-md shadow-2xl w-[320px] sm:w-87.5 h-115 flex flex-col overflow-hidden mb-4"
           >
             {/* Header */}
@@ -97,16 +124,20 @@ export const AIBot = () => {
                 <div className="w-8 h-8 rounded-full bg-gold/10 border border-gold flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-gold" />
                 </div>
+
                 <div>
                   <h4 className="text-[11px] uppercase tracking-widest font-bold text-white">
                     Bhatkar & Co. AI
                   </h4>
+
                   <p className="text-[8px] tracking-wider text-gold font-semibold uppercase">
                     Fragrance Stylist
                   </p>
                 </div>
               </div>
+
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="text-gray-400 hover:text-white transition-colors focus:outline-none"
               >
@@ -161,7 +192,7 @@ export const AIBot = () => {
                             finalHref = finalHref.replace(/^#/, "");
                           }
 
-                          // Handle all internal routes
+                          // Handle internal routes
                           if (finalHref?.startsWith("/")) {
                             return (
                               <Link
@@ -219,10 +250,12 @@ export const AIBot = () => {
                               className="object-cover"
                             />
                           </div>
+
                           <div className="flex-1 min-w-0 text-left">
                             <h5 className="text-[9px] font-bold text-luxury-black truncate uppercase tracking-wider">
                               {prod.name}
                             </h5>
+
                             <p className="text-[8px] text-gold font-bold mt-0.5">
                               ₹{prod.price}
                             </p>
@@ -261,17 +294,18 @@ export const AIBot = () => {
                 </div>
               ))}
 
+              {/* Typing indicator */}
               {isTyping && (
                 <div className="self-start flex items-center gap-1.5 bg-white border border-luxury-lightgrey rounded-md px-3 py-2 text-[10px] text-gray-400 italic shadow-sm">
-                  <Bot className="w-3 h-3 text-gold animate-bounce" /> Stylist
-                  is thinking...
+                  <Bot className="w-3 h-3 text-gold animate-bounce" />
+                  Stylist is thinking...
                 </div>
               )}
 
               <div ref={chatEndRef} />
             </div>
 
-            {/* Quick replies chips */}
+            {/* Quick replies */}
             {messages.length === 1 && (
               <div className="px-3 py-2 flex flex-wrap gap-1.5 bg-white border-t border-luxury-lightgrey">
                 <button
@@ -281,6 +315,7 @@ export const AIBot = () => {
                 >
                   🍋 Fresh/Citrus Scent
                 </button>
+
                 <button
                   type="button"
                   onClick={() => handleQuickReply("Recommend a Woody scent")}
@@ -288,6 +323,7 @@ export const AIBot = () => {
                 >
                   🪵 Woody/Oud Scent
                 </button>
+
                 <button
                   type="button"
                   onClick={() => handleQuickReply("Recommend a Floral scent")}
@@ -313,6 +349,7 @@ export const AIBot = () => {
                 onChange={(e) => setInput(e.target.value)}
                 className="flex-1 bg-luxury-deep border border-luxury-lightgrey text-luxury-black placeholder-gray-400 text-xs px-3.5 py-2 rounded focus:outline-none"
               />
+
               <button
                 type="submit"
                 className="bg-luxury-black text-white hover:bg-gold hover:text-luxury-black p-2.5 rounded flex items-center justify-center transition-colors focus:outline-none"
@@ -322,15 +359,17 @@ export const AIBot = () => {
             </form>
           </motion.div>
         )}
-      </AnimatePresence>
+      </motion.div>
 
       {/* Floating Toggle Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="bg-luxury-black hover:bg-gold hover:text-luxury-black border border-gold/20 text-white p-3.5 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 hover:scale-110 active:scale-95 group focus:outline-none flex items-center justify-center relative overflow-hidden"
         title="Bhatkar & Co. AI Stylist"
       >
         <div className="absolute inset-0 bg-gold/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+
         <Sparkles className="w-5.5 h-5.5 text-gold group-hover:scale-110 transition-transform" />
       </button>
     </div>
