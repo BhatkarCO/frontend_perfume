@@ -149,11 +149,24 @@ export default function InstagramFeed() {
           type="button"
           onClick={() => scroll("left")}
           aria-label="Previous Instagram posts"
-          className="absolute left-2 lg:left-6 top-1/2 -translate-y-1/2 z-20
-            w-10 h-10 rounded-full bg-white/95 border border-luxury-lightgrey
-            shadow-md flex items-center justify-center
-            text-luxury-black hover:text-gold hover:border-gold
-            transition-all duration-300"
+          className="
+    absolute left-2 lg:left-6 top-1/2 -translate-y-1/2 z-20
+    w-10 h-10 rounded-full
+    bg-luxury-black/90
+    border border-gold/50
+    shadow-[0_4px_16px_rgba(0,0,0,0.25)]
+    backdrop-blur-sm
+    flex items-center justify-center
+    text-gold
+    hover:bg-gold
+    hover:text-luxury-black
+    hover:border-gold
+    hover:scale-105
+    active:scale-95
+    transition-all duration-300
+    focus:outline-none
+    focus:ring-2 focus:ring-gold/30
+  "
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -302,11 +315,24 @@ export default function InstagramFeed() {
           type="button"
           onClick={() => scroll("right")}
           aria-label="Next Instagram posts"
-          className="absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 z-20
-            w-10 h-10 rounded-full bg-white/95 border border-luxury-lightgrey
-            shadow-md flex items-center justify-center
-            text-luxury-black hover:text-gold hover:border-gold
-            transition-all duration-300"
+          className="
+    absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 z-20
+    w-10 h-10 rounded-full
+    bg-luxury-black/90
+    border border-gold/50
+    shadow-[0_4px_16px_rgba(0,0,0,0.25)]
+    backdrop-blur-sm
+    flex items-center justify-center
+    text-gold
+    hover:bg-gold
+    hover:text-luxury-black
+    hover:border-gold
+    hover:scale-105
+    active:scale-95
+    transition-all duration-300
+    focus:outline-none
+    focus:ring-2 focus:ring-gold/30
+  "
         >
           <ChevronRight className="w-5 h-5" />
         </button>
