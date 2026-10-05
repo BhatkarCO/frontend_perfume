@@ -23,6 +23,7 @@ export const AIBot = () => {
   const [isTyping, setIsTyping] = useState(false);
 
   const chatEndRef = useRef(null);
+  const hasWarmedUpRef = useRef(false);
 
   // Keep a persistent session for the AI conversation
   const [sessionId, setSessionId] = useState("guest-user");
@@ -35,7 +36,10 @@ export const AIBot = () => {
         .toString(36)
         .substring(2, 10)}`;
 
-      localStorage.setItem("fragrance_chat_session", storedSessionId);
+      localStorage.setItem(
+        "fragrance_chat_session",
+        storedSessionId
+      );
     }
 
     setSessionId(storedSessionId);
@@ -62,6 +66,11 @@ export const AIBot = () => {
     setIsTyping(true);
 
     try {
+      if (!hasWarmedUpRef.current) {
+        await new Promise((resolve) => setTimeout(resolve, 55000));
+        hasWarmedUpRef.current = true;
+      }
+
       const response = await api.post("/chat", {
         session_id: sessionId,
         message: text,
@@ -75,6 +84,9 @@ export const AIBot = () => {
           id: Date.now() + 1,
           sender: "bot",
           text: data.reply,
+          products: data.products,
+          link: data.link,
+          links: data.links,
         },
       ]);
     } catch {
@@ -99,266 +111,283 @@ export const AIBot = () => {
     <div className="fixed bottom-20 md:bottom-6 right-6 z-40">
       <motion.div>
         {/* Chat Window */}
-        {isOpen && (
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 50,
-              scale: 0.9,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              scale: 1,
-            }}
-            exit={{
-              opacity: 0,
-              y: 50,
-              scale: 0.9,
-            }}
-            className="bg-white border border-luxury-lightgrey rounded-md shadow-2xl w-[320px] sm:w-87.5 h-115 flex flex-col overflow-hidden mb-4"
-          >
-            {/* Header */}
-            <div className="bg-luxury-black text-white px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gold/10 border border-gold flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-gold" />
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 50,
+                scale: 0.9,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+              }}
+              exit={{
+                opacity: 0,
+                y: 50,
+                scale: 0.9,
+              }}
+              className="bg-white border border-luxury-lightgrey rounded-md shadow-2xl w-[320px] sm:w-87.5 h-115 flex flex-col overflow-hidden mb-4"
+            >
+              {/* Header */}
+              <div className="bg-luxury-black text-white px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gold/10 border border-gold flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-gold" />
+                  </div>
+
+                  <div>
+                    <h4 className="text-[11px] uppercase tracking-widest font-bold text-white">
+                      Bhatkar & Co. AI
+                    </h4>
+
+                    <p className="text-[8px] tracking-wider text-gold font-semibold uppercase">
+                      Fragrance Stylist
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <h4 className="text-[11px] uppercase tracking-widest font-bold text-white">
-                    Bhatkar & Co. AI
-                  </h4>
-
-                  <p className="text-[8px] tracking-wider text-gold font-semibold uppercase">
-                    Fragrance Stylist
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="text-gray-400 hover:text-white transition-colors focus:outline-none"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors focus:outline-none"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Chat Body */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-luxury-deep">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col max-w-[80%] ${
-                    msg.sender === "user"
-                      ? "self-end items-end"
-                      : "self-start items-start"
-                  }`}
-                >
+              {/* Chat Body */}
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-luxury-deep">
+                {messages.map((msg) => (
                   <div
-                    className={`text-[11px] px-3.5 py-2.5 rounded-md leading-relaxed ${
+                    key={msg.id}
+                    className={`flex flex-col max-w-[80%] ${
                       msg.sender === "user"
-                        ? "bg-luxury-black text-white rounded-br-none"
-                        : "bg-white text-luxury-black border border-luxury-lightgrey rounded-bl-none shadow-sm"
+                        ? "self-end items-end"
+                        : "self-start items-start"
                     }`}
                   >
-                    <ReactMarkdown
-                      components={{
-                        p: ({ children }) => (
-                          <p className="mb-2 last:mb-0">{children}</p>
-                        ),
+                    <div
+                      className={`text-[11px] px-3.5 py-2.5 rounded-md leading-relaxed ${
+                        msg.sender === "user"
+                          ? "bg-luxury-black text-white rounded-br-none"
+                          : "bg-white text-luxury-black border border-luxury-lightgrey rounded-bl-none shadow-sm"
+                      }`}
+                    >
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => (
+                            <p className="mb-2 last:mb-0">
+                              {children}
+                            </p>
+                          ),
 
-                        strong: ({ children }) => (
-                          <strong className="font-bold">{children}</strong>
-                        ),
+                          strong: ({ children }) => (
+                            <strong className="font-bold">
+                              {children}
+                            </strong>
+                          ),
 
-                        img: ({ src, alt }) =>
-                          src ? (
-                            <Image
-                              src={src}
-                              alt={alt || "Fragrance"}
-                              width={180}
-                              height={180}
-                              className="w-full max-w-[180px] h-[180px] object-cover rounded-md mt-2 mb-2 border border-luxury-lightgrey"
-                            />
-                          ) : null,
+                          img: ({ src, alt }) =>
+                            src ? (
+                              <Image
+                                src={src}
+                                alt={alt || "Fragrance"}
+                                width={180}
+                                height={180}
+                                className="w-full max-w-[180px] h-[180px] object-cover rounded-md mt-2 mb-2 border border-luxury-lightgrey"
+                              />
+                            ) : null,
 
-                        a: ({ href, children }) => {
-                          let finalHref = href;
+                          a: ({ href, children }) => {
+                            let finalHref = href;
 
-                          // Convert old hash-based internal URLs
-                          if (finalHref?.startsWith("#/")) {
-                            finalHref = finalHref.replace(/^#/, "");
-                          }
+                            // Convert old hash-based internal URLs
+                            if (finalHref?.startsWith("#/")) {
+                              finalHref = finalHref.replace(/^#/, "");
+                            }
 
-                          // Handle internal routes
-                          if (finalHref?.startsWith("/")) {
+                            // Handle internal routes
+                            if (finalHref?.startsWith("/")) {
+                              return (
+                                <Link
+                                  href={finalHref}
+                                  onClick={() => setIsOpen(false)}
+                                  className="text-gold underline font-semibold hover:opacity-80"
+                                >
+                                  {children}
+                                </Link>
+                              );
+                            }
+
+                            // External links
                             return (
-                              <Link
+                              <a
                                 href={finalHref}
-                                onClick={() => setIsOpen(false)}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="text-gold underline font-semibold hover:opacity-80"
                               >
                                 {children}
-                              </Link>
+                              </a>
                             );
-                          }
+                          },
 
-                          // External links
-                          return (
-                            <a
-                              href={finalHref}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gold underline font-semibold hover:opacity-80"
-                            >
+                          ul: ({ children }) => (
+                            <ul className="list-disc ml-4 mb-2">
                               {children}
-                            </a>
-                          );
-                        },
+                            </ul>
+                          ),
 
-                        ul: ({ children }) => (
-                          <ul className="list-disc ml-4 mb-2">{children}</ul>
-                        ),
+                          li: ({ children }) => (
+                            <li className="mb-1">{children}</li>
+                          ),
+                        }}
+                      >
+                        {msg.text}
+                      </ReactMarkdown>
+                    </div>
 
-                        li: ({ children }) => (
-                          <li className="mb-1">{children}</li>
-                        ),
-                      }}
-                    >
-                      {msg.text}
-                    </ReactMarkdown>
+                    {/* Recommendation mini cards */}
+                    {msg.products && (
+                      <div className="flex flex-col gap-2 mt-2 w-full">
+                        {msg.products.map((prod, idx) => (
+                          <Link
+                            key={idx}
+                            href={`/product/${prod.slug}`}
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-3 bg-white p-2 border border-luxury-lightgrey rounded-sm hover:border-gold transition-colors shadow-sm"
+                          >
+                            <div className="relative w-8 h-8 shrink-0 rounded-sm overflow-hidden bg-luxury-darkgrey">
+                              <Image
+                                src={prod.image || "/hero-bg.jpg"}
+                                alt={prod.name}
+                                fill
+                                sizes="32px"
+                                className="object-cover"
+                              />
+                            </div>
+
+                            <div className="flex-1 min-w-0 text-left">
+                              <h5 className="text-[9px] font-bold text-luxury-black truncate uppercase tracking-wider">
+                                {prod.name}
+                              </h5>
+
+                              <p className="text-[8px] text-gold font-bold mt-0.5">
+                                ₹{prod.price}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Single Link response */}
+                    {msg.link && (
+                      <Link
+                        href={msg.link.url}
+                        onClick={() => setIsOpen(false)}
+                        className="mt-2 text-[9px] font-bold text-gold hover:underline uppercase tracking-wider flex items-center gap-1"
+                      >
+                        {msg.link.text} →
+                      </Link>
+                    )}
+
+                    {/* List of Links response */}
+                    {msg.links && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {msg.links.map((lnk, idx) => (
+                          <Link
+                            key={idx}
+                            href={lnk.url}
+                            onClick={() => setIsOpen(false)}
+                            className="bg-white border border-luxury-lightgrey text-luxury-black text-[8px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm hover:border-gold transition-colors shadow-sm"
+                          >
+                            {lnk.text}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
+                ))}
 
-                  {/* Recommendation mini cards */}
-                  {msg.products && (
-                    <div className="flex flex-col gap-2 mt-2 w-full">
-                      {msg.products.map((prod, idx) => (
-                        <Link
-                          key={idx}
-                          href={`/product/${prod.slug}`}
-                          onClick={() => setIsOpen(false)}
-                          className="flex items-center gap-3 bg-white p-2 border border-luxury-lightgrey rounded-sm hover:border-gold transition-colors shadow-sm"
-                        >
-                          <div className="relative w-8 h-8 shrink-0 rounded-sm overflow-hidden bg-luxury-darkgrey">
-                            <Image
-                              src={prod.image || "/hero-bg.jpg"}
-                              alt={prod.name}
-                              fill
-                              sizes="32px"
-                              className="object-cover"
-                            />
-                          </div>
+                {/* Typing indicator */}
+                {isTyping && (
+                  <div className="self-start flex items-center gap-1.5 bg-white border border-luxury-lightgrey rounded-md px-3 py-2 text-[10px] text-gray-400 italic shadow-sm">
+                    <Bot className="w-3 h-3 text-gold animate-bounce" />
 
-                          <div className="flex-1 min-w-0 text-left">
-                            <h5 className="text-[9px] font-bold text-luxury-black truncate uppercase tracking-wider">
-                              {prod.name}
-                            </h5>
+                    {hasWarmedUpRef.current
+                      ? "Stylist is thinking..."
+                      : "Waking up AI stylist..."}
+                  </div>
+                )}
 
-                            <p className="text-[8px] text-gold font-bold mt-0.5">
-                              ₹{prod.price}
-                            </p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                <div ref={chatEndRef} />
+              </div>
 
-                  {/* Single Link response */}
-                  {msg.link && (
-                    <Link
-                      href={msg.link.url}
-                      onClick={() => setIsOpen(false)}
-                      className="mt-2 text-[9px] font-bold text-gold hover:underline uppercase tracking-wider flex items-center gap-1"
-                    >
-                      {msg.link.text} →
-                    </Link>
-                  )}
+              {/* Quick replies */}
+              {messages.length === 1 && (
+                <div className="px-3 py-2 flex flex-wrap gap-1.5 bg-white border-t border-luxury-lightgrey">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleQuickReply("Recommend a Citrus scent")
+                    }
+                    className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
+                  >
+                    🍋 Fresh/Citrus Scent
+                  </button>
 
-                  {/* List of Links response */}
-                  {msg.links && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {msg.links.map((lnk, idx) => (
-                        <Link
-                          key={idx}
-                          href={lnk.url}
-                          onClick={() => setIsOpen(false)}
-                          className="bg-white border border-luxury-lightgrey text-luxury-black text-[8px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm hover:border-gold transition-colors shadow-sm"
-                        >
-                          {lnk.text}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleQuickReply("Recommend a Woody scent")
+                    }
+                    className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
+                  >
+                    🪵 Woody/Oud Scent
+                  </button>
 
-              {/* Typing indicator */}
-              {isTyping && (
-                <div className="self-start flex items-center gap-1.5 bg-white border border-luxury-lightgrey rounded-md px-3 py-2 text-[10px] text-gray-400 italic shadow-sm">
-                  <Bot className="w-3 h-3 text-gold animate-bounce" />
-                  Stylist is thinking...
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleQuickReply("Recommend a Floral scent")
+                    }
+                    className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
+                  >
+                    🌸 Sweet Floral Scent
+                  </button>
                 </div>
               )}
 
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Quick replies */}
-            {messages.length === 1 && (
-              <div className="px-3 py-2 flex flex-wrap gap-1.5 bg-white border-t border-luxury-lightgrey">
-                <button
-                  type="button"
-                  onClick={() => handleQuickReply("Recommend a Citrus scent")}
-                  className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
-                >
-                  🍋 Fresh/Citrus Scent
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickReply("Recommend a Woody scent")}
-                  className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
-                >
-                  🪵 Woody/Oud Scent
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickReply("Recommend a Floral scent")}
-                  className="text-[9px] bg-luxury-deep border border-luxury-lightgrey text-gray-600 px-2.5 py-1 rounded-full hover:border-gold hover:text-gold transition-colors focus:outline-none font-medium"
-                >
-                  🌸 Sweet Floral Scent
-                </button>
-              </div>
-            )}
-
-            {/* Input Form */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend(input);
-              }}
-              className="bg-white border-t border-luxury-lightgrey p-3 flex gap-2"
-            >
-              <input
-                type="text"
-                placeholder="Ask fragrance stylist..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="flex-1 bg-luxury-deep border border-luxury-lightgrey text-luxury-black placeholder-gray-400 text-xs px-3.5 py-2 rounded focus:outline-none"
-              />
-
-              <button
-                type="submit"
-                className="bg-luxury-black text-white hover:bg-gold hover:text-luxury-black p-2.5 rounded flex items-center justify-center transition-colors focus:outline-none"
+              {/* Input Form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend(input);
+                }}
+                className="bg-white border-t border-luxury-lightgrey p-3 flex gap-2"
               >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
-          </motion.div>
-        )}
+                <input
+                  type="text"
+                  placeholder="Ask fragrance stylist..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  className="flex-1 bg-luxury-deep border border-luxury-lightgrey text-luxury-black placeholder-gray-400 text-xs px-3.5 py-2 rounded focus:outline-none"
+                />
+
+                <button
+                  type="submit"
+                  className="bg-luxury-black text-white hover:bg-gold hover:text-luxury-black p-2.5 rounded flex items-center justify-center transition-colors focus:outline-none"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Floating Toggle Button */}
